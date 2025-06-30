@@ -12,9 +12,8 @@ A Library Management System built with C# using Asp.Net Core.
 
 ## Entity Relationships
 
-```
-![ERD](./image.png)
-```
+
+![ERD](image.png)
 
 
 ## Tech Stack
