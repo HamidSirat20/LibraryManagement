@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
+    <Folder Include="Models\Dtos\" />
+    <Folder Include="Services\Interfaces\" />
+	 <None Include=".gitignore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EditorConfigFiles Remove="F:\Integfiy older\Back-End\Practice Projects\LibraryManagement\LibraryManagement.WebAPI\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="F:\Integfiy Folder\Back-End\Practice Projects\LibraryManagement\LibraryManagement.WebAPI\.editorconfig" />
+  </ItemGroup>
+
+</Project>
