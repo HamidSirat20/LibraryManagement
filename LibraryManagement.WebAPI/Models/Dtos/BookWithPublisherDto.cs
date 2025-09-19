@@ -2,8 +2,9 @@
 
 namespace LibraryManagement.WebAPI.Models.Dtos;
 
-public class BookReadDto
+public class BookWithPublisherDto
 {
+    public Guid Id { get; set; }
     public string Title { get; init; }
     [StringLength(1000, ErrorMessage = "Description cannot be longer than 1000 characters.")]
     [DataType(DataType.MultilineText)]
@@ -15,9 +16,9 @@ public class BookReadDto
     public DateTime PublishedDate { get; set; }
     public Genre Genre { get; set; }
     public int Pages { get; set; }
-    public IList<BookAuthor> BookAuthors { get; set; } = new List<BookAuthor>();
+    public IList<AuthorDto> BookAuthors { get; set; } = new List<AuthorDto>();
     public Guid PublisherId { get; set; }
-    public Publisher Publisher { get; set; } = default!;
+    public PublisherDto Publisher { get; set; } = default!;
 }
 
 public class BookCreateDto

@@ -1,9 +1,7 @@
 ﻿using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Models;
-using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace LibraryManagement.WebAPI.Services.Implementations;
 
@@ -13,9 +11,9 @@ public class BookService : IBookService
 
     public BookService(LibraryDbContext dbContext)
     {
-        _dbContext = dbContext;
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
     }
-    public Task<BookReadDto> CreateEntityAsync(Book book)
+    public Task<Book> CreateEntityAsync(Book book)
     {
         throw new NotImplementedException();
     }
@@ -30,38 +28,27 @@ public class BookService : IBookService
         throw new NotImplementedException();
     }
 
-    public Task<BookReadDto?> GetByIdAsync(Guid id)
+    public async Task<Book?> GetByIdAsync(Guid id, bool includePublisher = false)
     {
-        throw new NotImplementedException();
+        var book = await _dbContext.Books
+             .Include(b => b.BookAuthors)
+             .ThenInclude(ba => ba.Author)
+             .Include(b => b.Publisher)
+             .FirstOrDefaultAsync(b=>b.Id ==id);
+        return book;
     }
 
-    public Task<BookReadDto?> GetByIdWithAuthorsAsync(Guid id)
+    public async Task<IEnumerable<Book>> ListAllBooksAsync()
     {
-        throw new NotImplementedException();
+        var books = await _dbContext.Books
+            .Include(a => a.BookAuthors)
+            .ThenInclude(ba => ba.Author)
+            .Include(b => b.Publisher)
+            .AsNoTracking().ToListAsync();
+        return books;
     }
 
-    public async Task<IEnumerable<BookReadDto>> ListAllAsync()
-    {
-        var bookDtos = await _dbContext.Books
-         .Include(b => b.Publisher)
-         .AsNoTracking()
-         .Select(b => new BookReadDto
-         {
-             Title = b.Title,
-             Description = b.Description,
-             CoverImageUrl = b.CoverImageUrl,
-             PublishedDate = b.PublishedDate,
-             Genre = b.Genre,
-             Pages = b.Pages,
-             PublisherId = b.PublisherId,
-             Publisher = b.Publisher
-         })
-         .ToListAsync();
-
-        return bookDtos;
-    }
-
-    public Task<BookReadDto> UpdateEntityAsync(Book book)
+    public Task<Book> UpdateEntityAsync(Book book)
     {
         throw new NotImplementedException();
     }
