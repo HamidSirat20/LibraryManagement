@@ -24,13 +24,19 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
     public Guid PublisherId { get; set; }
     public Publisher Publisher { get; set; } = default!;
 
-    public Book( string title, string description, DateTime publishedDate, Genre genre, int pages)
+    public Book()
     {
-            Title = title;
-        Description = description;
+        
+    }
+    public Book( string title, string description, string imageUrl,DateTime publishedDate, Genre genre, int pages)
+    {
+        Title = title;
+        Description = description;  
+        CoverImageUrl = imageUrl;
         PublishedDate = publishedDate;
         Genre = genre;
         Pages = pages;
+        
     }
 
     public int CompareTo(Book? other)=>string.Compare(Title, other?.Title ,StringComparison.OrdinalIgnoreCase);

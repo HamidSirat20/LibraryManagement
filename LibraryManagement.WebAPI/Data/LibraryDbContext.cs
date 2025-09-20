@@ -22,6 +22,9 @@ namespace LibraryManagement.WebAPI.Data
         {
 
             _config = config ?? throw new ArgumentNullException(nameof(config));
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+            AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

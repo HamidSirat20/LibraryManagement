@@ -32,20 +32,38 @@ namespace LibraryManagement.WebAPI.Controllers;
     }
 
     [HttpGet("{id}", Name = "GetBookById")]
-    public async Task<ActionResult<BookWithPublisherDto>> GetBookById(Guid id, bool includePublisher =false)
+    public async Task<IActionResult> GetBookById(Guid id, bool includePublisher =false)
     {
         var book = await _bookService.GetByIdAsync(id, includePublisher);
-        if (book is null) 
+        if (book is null)
         {
+            _logger.LogDebug("Book with id: {id} was not found", id);
             return NotFound();
         }
 
-        if(includePublisher)
+        if (includePublisher)
         {
             var bookDto = book.MapBookToBookWithPublisherDto();
             return Ok(bookDto);
         }
         var bookWithPublisherDto = book.MapBookToBookWithoutPublisherDto();
         return Ok(bookWithPublisherDto);
+    }
+    [HttpPost]
+    public async Task<IActionResult> CreateBook([FromBody] BookCreateDto bookCreateDto)
+    {
+        if (bookCreateDto == null)
+        {
+            _logger.LogDebug("BookCreateDto object sent from client is null.");
+            return BadRequest("BookCreateDto object is null");
+        }
+        if (!ModelState.IsValid)
+        {
+            _logger.LogDebug("Invalid model state for the BookCreateDto object");
+            return UnprocessableEntity(ModelState);
+        }
+        var createdBook = await _bookService.CreateBookAsync(bookCreateDto);
+        var bookReadDto = createdBook.MapBookToBookReadDto();
+        return CreatedAtAction("GetBookById", new { id = bookReadDto.Id }, bookReadDto);
     }
 }

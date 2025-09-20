@@ -6,8 +6,9 @@ namespace LibraryManagement.WebAPI.Services.Interfaces;
     {
         Task<IEnumerable<Book>> ListAllBooksAsync();
         Task<Book?> GetByIdAsync(Guid id,bool includePublisher = false);
-        Task<Book> CreateEntityAsync(Book book);
-        Task<Book> UpdateEntityAsync(Book book);
-        Task<bool> EntityExistAsync(Book book);
+        Task<Book> CreateBookAsync(BookCreateDto bookCreateDto);
+        Task<Book> UpdateBookAsync(Book book);
+        Task<bool> EntityExistAsync(Guid id);
         Task<bool?> DeleteByIdAsync(Guid id);
-    }
+        Task<bool> SaveChangesAsync ();
+}

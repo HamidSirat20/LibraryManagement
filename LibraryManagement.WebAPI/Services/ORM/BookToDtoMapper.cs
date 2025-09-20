@@ -23,14 +23,16 @@ namespace LibraryManagement.WebAPI.Services.ORM;
                            FirstName = ba.Author.FirstName,
                            LastName = ba.Author.LastName,
                            Email = ba.Author.Email,
-                           Bio = ba.Author.Bio
-                       }).ToList(),
+                           Bio = ba.Author.Bio,
+                           BookCount = ba.Author.BookAuthors.Count
+                }).ToList(),
                 Publisher = new PublisherDto
                 {
                     Id = book.Publisher.Id,
                     Name = book.Publisher.Name,
                     Address = book.Publisher.Address,
-                    Website = book.Publisher.Website
+                    Website = book.Publisher.Website,
+                    BookCount = book.Publisher.Books.Count
                 }
             };
         }
@@ -58,8 +60,56 @@ namespace LibraryManagement.WebAPI.Services.ORM;
         };
     }
 
-
+    public static BookCreateDto MapBookToBookCreateDto(this Book book)
+    {
+        return new BookCreateDto
+        {
+            Title = book.Title,
+            Genre = book.Genre,
+            Description = book.Description,
+            CoverImageUrl = book.CoverImageUrl,
+            PublishedDate = book.PublishedDate,
+            Pages = book.Pages,
+            PublisherId = book.PublisherId,
+            AuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList()
+        };
     }
+
+    public static Book MapBookCreateDtoToBook(this BookCreateDto bookCreateDto)
+    {
+        return new Book(
+            bookCreateDto.Title,
+            bookCreateDto.Description,
+            bookCreateDto.CoverImageUrl,
+            bookCreateDto.PublishedDate,
+            bookCreateDto.Genre,
+            bookCreateDto.Pages
+        )
+        {
+            BookAuthors = bookCreateDto.AuthorIds
+                .Select(authorId => new BookAuthor { AuthorId = authorId })
+                .ToList(),
+            PublisherId = bookCreateDto.PublisherId
+        };
+    }
+
+    public static BookReadDto MapBookToBookReadDto(this Book book)
+    {
+        return new BookReadDto
+        {
+            Id = book.Id,
+            Title = book.Title,
+            Genre = book.Genre,
+            Description = book.Description,
+            CoverImageUrl = book.CoverImageUrl,
+            PublishedDate = book.PublishedDate,
+            Pages = book.Pages,
+            PublisherId = book.PublisherId,
+            AuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList()
+        };
+    }
+
+}
 
 
 
