@@ -2,6 +2,7 @@
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
+using LibraryManagement.WebAPI.Services.ORM;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.WebAPI.Services.Implementations;
@@ -40,14 +41,17 @@ public class BookService : IBookService
                 BookId = book.Id
             });
         }
-        _dbContext.Books.Add(book);
+       _dbContext.Books.Add(book);
         await SaveChangesAsync();
         return book;
     }
 
-    public Task<bool?> DeleteByIdAsync(Guid id)
+    public async Task<bool?> DeleteBookByIdAsync(Guid id)
     {
-        throw new NotImplementedException();
+       var book  = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == id);
+        if (book == null) return false;
+        _dbContext.Books.Remove(book);
+        return await SaveChangesAsync();
     }
 
     public async Task<bool> EntityExistAsync(Guid id)
@@ -84,13 +88,37 @@ public class BookService : IBookService
         return books;
     }
 
-    public Task<Book> UpdateBookAsync(Book book)
+    public async Task<Book> UpdateBookAsync(Guid id, BookUpdateDto bookUpdateDto)
     {
-        throw new NotImplementedException();
+        var existingBook = await _dbContext.Books
+            .Include(b => b.Publisher)
+            .Include(b => b.BookAuthors)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (existingBook == null)
+            throw new ArgumentException("Book not found");
+
+        var boo = bookUpdateDto.MapBookUpdateDtoToBook(existingBook);
+        _dbContext.Books.Update(boo);
+        await _dbContext.SaveChangesAsync();
+
+        return existingBook;
     }
     public async Task<bool> SaveChangesAsync()
     {
         return (await _dbContext.SaveChangesAsync() >= 0);
+    }
+
+    public async Task<Book> PartiallyUpdateBookAsync(Book book)
+    {
+        if (book == null)
+        {
+            throw new ArgumentNullException(nameof(book));
+        }
+        _dbContext.Books.Update(book);
+        await SaveChangesAsync();
+        return book;
+
     }
 }
 

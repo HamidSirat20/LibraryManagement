@@ -2,12 +2,19 @@ using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+        .AddNewtonsoftJson()
+       .AddJsonOptions(options =>
+       {
+           options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+           options.JsonSerializerOptions.WriteIndented = true;
+       });
 
 // Add DbContext
 builder.Services.AddDbContext<LibraryDbContext>();

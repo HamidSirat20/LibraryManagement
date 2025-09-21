@@ -5,7 +5,7 @@ namespace LibraryManagement.WebAPI.Models.Dtos;
         public class BookCreateDto
         {
             [Required]
-            public string Title { get; init; }
+            public string Title { get; set; }
             [StringLength(1000, ErrorMessage = "Description cannot be longer than 1000 characters.")]
             [DataType(DataType.MultilineText)]
             public string Description { get; set; }

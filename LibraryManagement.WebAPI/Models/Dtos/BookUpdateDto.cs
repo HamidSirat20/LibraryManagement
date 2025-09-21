@@ -1,11 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace LibraryManagement.WebAPI.Models.Dtos;
-
-public class BookWithPublisherDto
+public class BookUpdateDto
 {
-    public Guid Id { get; set; }
-    public string Title { get; init; }
+    public string Title { get; set; }
     [StringLength(1000, ErrorMessage = "Description cannot be longer than 1000 characters.")]
     [DataType(DataType.MultilineText)]
     public string Description { get; set; }
@@ -16,7 +14,5 @@ public class BookWithPublisherDto
     public DateTime PublishedDate { get; set; }
     public Genre Genre { get; set; }
     public int Pages { get; set; }
-    public IList<AuthorDto> BookAuthors { get; set; } = new List<AuthorDto>();
-    public Guid PublisherId { get; set; }
-    public PublisherDto Publisher { get; set; } = default!;
+
 }

@@ -108,7 +108,54 @@ namespace LibraryManagement.WebAPI.Services.ORM;
             AuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList()
         };
     }
+    public static BookUpdateDto MapBookToBookUpdateDto(this Book book)
+    {
+        return new BookUpdateDto
+        {
+            Title = book.Title,
+            Genre = book.Genre,
+            Description = book.Description,
+            CoverImageUrl = book.CoverImageUrl,
+            PublishedDate = book.PublishedDate,
+            Pages = book.Pages
+        };
+    }
+    //public static Book MapBookUpdateDtoToBook(this BookUpdateDto bookUpdateDto)
+    //{
+    //    return new Book
+    //    {
+    //        Title = bookUpdateDto.Title,
+    //        Genre = bookUpdateDto.Genre,
+    //        Description = bookUpdateDto.Description,
+    //        CoverImageUrl = bookUpdateDto.CoverImageUrl,
+    //        PublishedDate = bookUpdateDto.PublishedDate,
+    //        Pages = bookUpdateDto.Pages
+    //    };
+    //}
 
+    public static Book MapBookUpdateDtoToBook(this BookUpdateDto bookUpdateDto, Book existingBook)
+    {
+        if (bookUpdateDto.Title != null)
+            existingBook.Title = bookUpdateDto.Title;
+
+        if (bookUpdateDto.Description != null)
+            existingBook.Description = bookUpdateDto.Description;
+
+        if (bookUpdateDto.CoverImageUrl != null)
+            existingBook.CoverImageUrl = bookUpdateDto.CoverImageUrl;
+
+        if (bookUpdateDto.PublishedDate != default)
+            existingBook.PublishedDate = bookUpdateDto.PublishedDate;
+
+        if (bookUpdateDto.Genre != default)
+            existingBook.Genre = bookUpdateDto.Genre;
+
+        if (bookUpdateDto.Pages > 0)
+            existingBook.Pages = bookUpdateDto.Pages;
+
+        existingBook.UpdatedAt = DateTime.UtcNow;
+        return existingBook;
+    }
 }
 
 

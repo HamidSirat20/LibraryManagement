@@ -6,7 +6,7 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
 {
     [Required]
     [StringLength(200, ErrorMessage = "Title cannot be longer than 200 characters.")]
-    public string Title { get; init; }
+    public string Title { get; set; }
     [StringLength(1000, ErrorMessage = "Description cannot be longer than 1000 characters.")]
     [DataType(DataType.MultilineText)]
     public string Description { get; set; }
