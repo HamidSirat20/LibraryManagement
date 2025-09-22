@@ -5,7 +5,7 @@ using LibraryManagement.WebAPI.Models.Dtos;
 namespace LibraryManagement.WebAPI.Services.Interfaces;
     public interface IBookService
     {
-        Task<IEnumerable<Book>> ListAllBooksAsync(QueryOptions queryOption);
+        Task<(IEnumerable<Book>,PaginationMetadata)> ListAllBooksAsync(QueryOptions queryOption);
         Task<Book?> GetByIdAsync(Guid id,bool includePublisher = false);
         Task<Book> CreateBookAsync(BookCreateDto bookCreateDto);
         Task<Book> UpdateBookAsync(Guid id, BookUpdateDto bookUpdateDto);

@@ -79,7 +79,7 @@ public class BookService : IBookService
                 .FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<IEnumerable<Book>> ListAllBooksAsync(QueryOptions queryOptions)
+    public async Task<(IEnumerable<Book>,PaginationMetadata)> ListAllBooksAsync(QueryOptions queryOptions)
     {
         var query = _dbContext.Books
             .Include(a => a.BookAuthors)
@@ -122,8 +122,14 @@ public class BookService : IBookService
                 _ => query.OrderBy(b => b.Title)
             };
 
+
         }
-        return await query.Skip(queryOptions.PageSize * (queryOptions.PageNumber - 1)).Take(queryOptions.PageSize).ToListAsync();
+        //pagination metadata
+        var ItemCount = await query.CountAsync();
+        var paginationMetadata = new PaginationMetadata(ItemCount, queryOptions.PageNumber, queryOptions.PageSize);
+
+        var collection = await query.Skip(queryOptions.PageSize * (queryOptions.PageNumber - 1)).Take(queryOptions.PageSize).ToListAsync();
+        return (collection, paginationMetadata);
         
     }
 

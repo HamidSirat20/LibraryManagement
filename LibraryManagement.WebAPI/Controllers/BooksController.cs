@@ -4,6 +4,7 @@ using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
@@ -22,13 +23,14 @@ public class BooksController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<BookWithPublisherDto>>> ListAllBooks([FromQuery] QueryOptions queryOptions)
     {
-        var books = await _bookService.ListAllBooksAsync(queryOptions);
+        var (books, paginationMetadata) = await _bookService.ListAllBooksAsync(queryOptions);
 
         var bookWithPublisherDto = new List<BookWithPublisherDto>();
         foreach (var book in books)
         {
             bookWithPublisherDto.Add(book.MapBookToBookWithPublisherDto());
         }
+        Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
         return Ok(bookWithPublisherDto);
 
     }
