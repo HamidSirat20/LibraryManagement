@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+﻿using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.WebAPI.Controllers;
@@ -19,16 +20,16 @@ public class BooksController : ControllerBase
         _bookService = bookService ?? throw new ArgumentNullException(nameof(bookService));
     }
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<BookWithPublisherDto>>> ListAllBooks()
+    public async Task<ActionResult<IEnumerable<BookWithPublisherDto>>> ListAllBooks([FromQuery] QueryOptions queryOptions)
     {
-        var books = await _bookService.ListAllBooksAsync();
+        var books = await _bookService.ListAllBooksAsync(queryOptions);
 
         var bookWithPublisherDto = new List<BookWithPublisherDto>();
         foreach (var book in books)
         {
             bookWithPublisherDto.Add(book.MapBookToBookWithPublisherDto());
         }
-        return Ok(bookWithPublisherDto.OrderBy(b => b.Title));
+        return Ok(bookWithPublisherDto);
 
     }
 
@@ -135,9 +136,8 @@ public class BooksController : ControllerBase
             return UnprocessableEntity(ModelState);
         }
 
-       var entity = bookToPatchDto.MapBookUpdateDtoToBook(existingBook);
-      
-         await _bookService.PartiallyUpdateBookAsync(entity);
+      var bookForUpdate =  bookToPatchDto.MapBookUpdateDtoToBook(existingBook);
+        await _bookService.PartiallyUpdateBookAsync(bookForUpdate);
         return NoContent();
     }
 
