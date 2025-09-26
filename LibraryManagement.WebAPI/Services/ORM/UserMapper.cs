@@ -1,5 +1,7 @@
 ﻿using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
+using System.Net;
+using System.Numerics;
 
 namespace LibraryManagement.WebAPI.Services.ORM;
     public static class UserMapper
@@ -52,8 +54,7 @@ namespace LibraryManagement.WebAPI.Services.ORM;
             Email = user.Email,
             Phone = user.Phone,
             Address = user.Address,
-            AvatarUrl = user.AvatarUrl,
-            Password = string.Empty 
+            AvatarUrl = user.AvatarUrl
         };
     }
     public static UserCreateDto MapToUserCreateDto(this User user)
@@ -70,6 +71,25 @@ namespace LibraryManagement.WebAPI.Services.ORM;
             AvatarUrl = user.AvatarUrl,
             Password = string.Empty 
         };
+    }
+
+    public static User MapUserUpdateDtoToUser(this UserUpdateDto  userUpdateDto, User user)
+    {
+        if (userUpdateDto == null) return null;
+
+        if (userUpdateDto.FirstName != null) 
+            user.FirstName = userUpdateDto.FirstName;
+        if (userUpdateDto.LastName != null)
+            user.LastName = userUpdateDto.LastName;
+        if (userUpdateDto.Email != null)
+            user.Email = userUpdateDto.Email;
+        if (userUpdateDto.Phone != null)
+            user.Phone = userUpdateDto.Phone;
+        if (userUpdateDto.Address != null)
+            user.Address = userUpdateDto.Address;
+        if (userUpdateDto.AvatarUrl != null)
+            user.AvatarUrl = userUpdateDto.AvatarUrl;
+        return user;
     }
 }
 

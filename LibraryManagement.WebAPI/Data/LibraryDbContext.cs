@@ -42,7 +42,16 @@ namespace LibraryManagement.WebAPI.Data
             modelBuilder.HasPostgresEnum<Genre>();
             modelBuilder.HasPostgresEnum<FineStatus>();
             modelBuilder.HasPostgresEnum<LoanStatus>();
- 
+
+            modelBuilder.Entity<User>()
+                        .Property(u => u.Role)
+                        .HasColumnType("user_role");
+            modelBuilder.Entity<Book>()
+                        .Property(b => b.Genre)
+                        .HasColumnType("genre");
+            modelBuilder.Entity<Loan>()
+                        .Property(u => u.LoanStatus)
+                        .HasColumnType("loan_status");
 
             base.OnModelCreating(modelBuilder);
         }

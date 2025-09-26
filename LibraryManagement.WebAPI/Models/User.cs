@@ -2,11 +2,11 @@ namespace LibraryManagement.WebAPI.Models;
 
 public class User: BaseEntityWithId
 {
-    public string FirstName { get; init; }
-    public string LastName { get; init; }
-    public string Email { get; init; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string Email { get; set; }
     public string Password { get; set; }
-    public string Phone { get; init; }
+    public string Phone { get; set; }
     public string Address { get; set; }
     public string AvatarUrl { get; set; } = "https://www.gravatar.com/avatar/";
     public UserRole Role { get; set; } = UserRole.User;
