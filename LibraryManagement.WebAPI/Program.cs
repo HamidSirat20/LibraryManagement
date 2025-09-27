@@ -2,6 +2,7 @@ using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,7 +33,20 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
-
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer( options =>
+    {
+        options.TokenValidationParameters = new()
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Authentication:issuer"],
+            ValidAudience = builder.Configuration["Authentication:audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.Unicode.GetBytes(builder.Configuration["Authentication:secretKey"])),
+        };
+    });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -43,7 +57,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

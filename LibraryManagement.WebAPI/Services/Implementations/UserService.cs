@@ -3,7 +3,8 @@ using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using LibraryManagement.WebAPI.Services.ORM; 
+using LibraryManagement.WebAPI.Services.ORM;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryManagement.WebAPI.Services.Implementations
 {
@@ -15,7 +16,6 @@ namespace LibraryManagement.WebAPI.Services.Implementations
         {
             _dbContext = libraryDbContext ?? throw new ArgumentNullException(nameof(libraryDbContext));
         }
-
         public Task<bool> ChangePassword(ChangePasswordDto changePasswordDto)
         {
             throw new NotImplementedException();
@@ -67,6 +67,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
 
         public async Task<UserReadDto?> GetByIdAsync(Guid id, bool includeLoansAndReservations = false)
         {
+
             if (id == Guid.Empty)
             {
                 throw new ArgumentException("User ID cannot be empty", nameof(id));
@@ -114,7 +115,6 @@ namespace LibraryManagement.WebAPI.Services.Implementations
                 .ToListAsync();
             return users;
         }
-
         public async Task<IEnumerable<UserReadDto>> ListAllUsersAsync()
         {
            var users = await _dbContext.Users.ToListAsync();

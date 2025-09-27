@@ -1,10 +1,12 @@
 ﻿using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/v1/[controller]")]
     public class UsersController : ControllerBase
 {
@@ -23,6 +25,8 @@ namespace LibraryManagement.WebAPI.Controllers;
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOneUser(Guid id)
     {
+        var bookId = HttpContext.Request.RouteValues["id"];
+        Console.WriteLine(bookId);
        var user = await _userService.GetByIdAsync(id);
         if(user == null)
         {
