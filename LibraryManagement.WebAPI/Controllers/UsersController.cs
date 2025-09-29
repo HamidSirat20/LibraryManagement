@@ -2,6 +2,8 @@
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
@@ -25,13 +27,20 @@ namespace LibraryManagement.WebAPI.Controllers;
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOneUser(Guid id)
     {
-        var bookId = HttpContext.Request.RouteValues["id"];
-        Console.WriteLine(bookId);
-       var user = await _userService.GetByIdAsync(id);
+   
+        var user = await _userService.GetByIdAsync(id);
         if(user == null)
         {
             return NotFound();
         }
+        //var etag = $"\"{user.MembershipEndDate.Ticks}\"";
+        //var clientEtag = Request.Headers["If-None-Match"].FirstOrDefault();
+
+        //if (clientEtag == etag)
+        //{
+        //    return StatusCode(StatusCodes.Status304NotModified);
+        //}
+        //Response.Headers["ETag"] = etag;
         return Ok(user);
     }
 

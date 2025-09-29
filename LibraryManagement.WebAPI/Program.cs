@@ -32,9 +32,8 @@ builder.Services.AddDbContext<LibraryDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-
 builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer( options =>
+    .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new()
         {
@@ -47,6 +46,16 @@ builder.Services.AddAuthentication("Bearer")
             IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.Unicode.GetBytes(builder.Configuration["Authentication:secretKey"])),
         };
     });
+
+//builder.Services.AddAuthorization(option =>
+//{
+//    option.AddPolicy("AdminCanAccess", policy =>
+//    {
+//        policy.RequireClaim("role", "admin");
+//        policy.RequireClaim("subscriptionlevel", "adminlevel");
+//    });
+//});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -22,13 +22,15 @@ namespace LibraryManagement.WebAPI.Controllers
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
         [HttpPost("authenticate")]
-        public ActionResult<string> Authenticate(LoginDto loginDto)
+        public async Task<ActionResult<string>> Authenticate(LoginDto loginDto)
         {
-            var loginUser = ValidateUser(loginDto);
+            var loginUser =await ValidateUser(loginDto);
             if (loginUser is null)
             {
                 return Unauthorized();
             }
+            Console.WriteLine($"User ID: {loginUser.Id}, Type: {loginUser.Id.GetType()}");
+
             //create a token
             var securityKey =new SymmetricSecurityKey(Encoding.Unicode.GetBytes(_configuration["Authentication:secretKey"]));
             var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -36,9 +38,9 @@ namespace LibraryManagement.WebAPI.Controllers
             //claims
             var claimsForToken = new List<Claim>();
             claimsForToken.Add(new Claim("sub", loginUser.Id.ToString()));
-            claimsForToken.Add(new Claim("given_name", loginUser.Result.FirstName ));
-            claimsForToken.Add(new Claim("family_name", loginUser.Result.LastName));
-            claimsForToken.Add(new Claim("email", loginUser.Result.Email));
+            claimsForToken.Add(new Claim("given_name", loginUser.FirstName ));
+            claimsForToken.Add(new Claim("family_name", loginUser.LastName));
+            claimsForToken.Add(new Claim("email", loginUser.Email));
            
             //jwt 
             var jwtSecurityToken  = new JwtSecurityToken(
@@ -57,6 +59,7 @@ namespace LibraryManagement.WebAPI.Controllers
         private async Task< UserValidateDto> ValidateUser(LoginDto loginDto)
         {
             var user = await _userService.GetByEmailAsync(loginDto.Email);
+            Console.WriteLine("from meth"+ user.Id);
             if (user == null)
                 return null;
             return new UserValidateDto
