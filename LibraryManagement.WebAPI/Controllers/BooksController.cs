@@ -1,4 +1,5 @@
-﻿using LibraryManagement.WebAPI.Models.Common;
+﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
@@ -11,7 +12,8 @@ namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/v1/[controller]")]
+[Route("api/v{version.apiVersion}/[controller]")]
+[ApiVersion("1.0")]
 public class BooksController : ControllerBase
 {
     private readonly ILogger<BooksController> _logger;

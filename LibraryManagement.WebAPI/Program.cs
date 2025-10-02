@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Services.Implementations;
@@ -5,7 +6,6 @@ using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,6 +66,14 @@ builder.Services.AddAuthorization(option =>
         
     });
 });
+
+//add versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.DefaultApiVersion = new  ApiVersion (1, 0);
+    options.ReportApiVersions = true;
+}).AddMvc();
 
 var app = builder.Build();
 

@@ -1,4 +1,5 @@
-﻿using LibraryManagement.WebAPI.Models;
+﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +10,8 @@ using System.Text;
 
 namespace LibraryManagement.WebAPI.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v{version.apiVersion}/[controller]")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class AuthController : ControllerBase
     {

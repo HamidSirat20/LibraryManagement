@@ -1,4 +1,5 @@
-﻿using LibraryManagement.WebAPI.Models.Dtos;
+﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,9 +9,10 @@ using System.Security.Claims;
 namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
-[Authorize]
-[Route("api/v1/[controller]")]
-    public class UsersController : ControllerBase
+//[Authorize]
+[Route("api/v{version.ApiVersion}/[controller]")]
+[ApiVersion("1.0")]
+public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
 

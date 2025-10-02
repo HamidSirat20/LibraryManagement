@@ -1,4 +1,5 @@
-﻿using LibraryManagement.WebAPI.Data;
+﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Services.ORM;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -6,7 +7,8 @@ using System.Security.Claims;
 
 namespace LibraryManagement.WebAPI.Controllers
 {
-    [Route("api/v1/users/[controller]")]
+    [Route("api/v{version.apiVersion}/users/[controller]")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class ProfileController : ControllerBase
     {
