@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LibraryManagement.WebAPI.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    [Migration("20250926102357_EnumMapingAdded")]
-    partial class EnumMapingAdded
+    [Migration("20251001203528_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

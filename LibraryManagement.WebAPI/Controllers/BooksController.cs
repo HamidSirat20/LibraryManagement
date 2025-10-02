@@ -56,6 +56,7 @@ public class BooksController : ControllerBase
         return Ok(bookWithPublisherDto);
     }
     [HttpPost]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> CreateBook([FromBody] BookCreateDto bookCreateDto)
     {
         if (bookCreateDto == null)
@@ -74,6 +75,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult>  DeleteBookById (Guid id)
     {
         if(! await _bookService.EntityExistAsync(id))
@@ -91,6 +93,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> UpdateBook(Guid id, [FromBody] BookUpdateDto bookUpdateDto)
     {
         if (bookUpdateDto == null)
@@ -116,6 +119,7 @@ public class BooksController : ControllerBase
 
 
     [HttpPatch("{id}")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> PartiallyUpdateBookAsync(Guid id, [FromBody] JsonPatchDocument<BookUpdateDto> patchDocument)
     {
         var existingBook = await _bookService.GetByIdAsync(id);
@@ -142,6 +146,7 @@ public class BooksController : ControllerBase
 
       var bookForUpdate =  bookToPatchDto.MapBookUpdateDtoToBook(existingBook);
         await _bookService.PartiallyUpdateBookAsync(bookForUpdate);
+       await _bookService.SaveChangesAsync();
         return NoContent();
     }
 

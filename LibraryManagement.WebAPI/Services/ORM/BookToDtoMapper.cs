@@ -120,18 +120,6 @@ namespace LibraryManagement.WebAPI.Services.ORM;
             Pages = book.Pages
         };
     }
-    //public static Book MapBookUpdateDtoToBook(this BookUpdateDto bookUpdateDto)
-    //{
-    //    return new Book
-    //    {
-    //        Title = bookUpdateDto.Title,
-    //        Genre = bookUpdateDto.Genre,
-    //        Description = bookUpdateDto.Description,
-    //        CoverImageUrl = bookUpdateDto.CoverImageUrl,
-    //        PublishedDate = bookUpdateDto.PublishedDate,
-    //        Pages = bookUpdateDto.Pages
-    //    };
-    //}
 
     public static Book MapBookUpdateDtoToBook(this BookUpdateDto bookUpdateDto, Book existingBook)
     {

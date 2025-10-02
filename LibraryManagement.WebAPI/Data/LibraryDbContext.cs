@@ -28,30 +28,40 @@ namespace LibraryManagement.WebAPI.Data
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            var builder = new NpgsqlDataSourceBuilder(_config.GetConnectionString("DefaultConnection"));
-            builder.MapEnum<UserRole>();
-            builder.MapEnum<Genre>();
-            builder.MapEnum<FineStatus>();
-            builder.MapEnum<LoanStatus>();
-            optionsBuilder.UseSnakeCaseNamingConvention();
+            var dataSourceBuilder = new NpgsqlDataSourceBuilder(_config.GetConnectionString("DefaultConnection"));
+
+            // Explicitly map your enums
+            dataSourceBuilder.MapEnum<UserRole>("user_role");
+            dataSourceBuilder.MapEnum<Genre>("genre");
+            dataSourceBuilder.MapEnum<FineStatus>("fine_status");
+            dataSourceBuilder.MapEnum<LoanStatus>("loan_status");
+
+            var dataSource = dataSourceBuilder.Build();
+
+            optionsBuilder
+                .UseNpgsql(dataSource) // ✅ use mapped data source
+                .UseSnakeCaseNamingConvention();
 
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasPostgresEnum<UserRole>();
-            modelBuilder.HasPostgresEnum<Genre>();
-            modelBuilder.HasPostgresEnum<FineStatus>();
-            modelBuilder.HasPostgresEnum<LoanStatus>();
+            modelBuilder.HasPostgresEnum<UserRole>("public", "user_role");
+            modelBuilder.HasPostgresEnum<Genre>("public", "genre");
+            modelBuilder.HasPostgresEnum<FineStatus>("public", "fine_status");
+            modelBuilder.HasPostgresEnum<LoanStatus>("public", "loan_status");
 
             modelBuilder.Entity<User>()
                         .Property(u => u.Role)
                         .HasColumnType("user_role");
+
             modelBuilder.Entity<Book>()
                         .Property(b => b.Genre)
                         .HasColumnType("genre");
+
             modelBuilder.Entity<Loan>()
-                        .Property(u => u.LoanStatus)
+                        .Property(l => l.LoanStatus)
                         .HasColumnType("loan_status");
+
 
             base.OnModelCreating(modelBuilder);
         }

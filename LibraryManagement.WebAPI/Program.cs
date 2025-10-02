@@ -1,8 +1,10 @@
 using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Converters;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,15 +12,25 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers()
-        .AddNewtonsoftJson()
-       .AddJsonOptions(options =>
-       {
-           options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-           options.JsonSerializerOptions.WriteIndented = true;
-       });
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.Converters.Add(new StringEnumConverter());
+        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+        options.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
+    });
 
 // Add DbContext
-builder.Services.AddDbContext<LibraryDbContext>();
+builder.Services.AddDbContext<LibraryDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions =>
+        {
+            npgsqlOptions.MapEnum<UserRole>("user_role");
+            npgsqlOptions.MapEnum<Genre>("genre");
+            npgsqlOptions.MapEnum<FineStatus>("fine_status");
+            npgsqlOptions.MapEnum<LoanStatus>("loan_status");
+        });
+});
 
 // Add services
 builder.Services.AddScoped<IBookService, BookService>();
@@ -28,10 +40,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<LibraryDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+
+// Add Authentication
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer(options =>
     {
@@ -47,14 +57,15 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 
-//builder.Services.AddAuthorization(option =>
-//{
-//    option.AddPolicy("AdminCanAccess", policy =>
-//    {
-//        policy.RequireClaim("role", "admin");
-//        policy.RequireClaim("subscriptionlevel", "adminlevel");
-//    });
-//});
+builder.Services.AddAuthorization(option =>
+{
+    option.AddPolicy("AdminCanAccess", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireRole("role", "Admin");
+        
+    });
+});
 
 var app = builder.Build();
 

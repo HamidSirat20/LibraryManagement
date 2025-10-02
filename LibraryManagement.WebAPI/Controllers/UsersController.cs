@@ -19,6 +19,7 @@ namespace LibraryManagement.WebAPI.Controllers;
         _userService = userService;
     }
     [HttpGet]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> ListALLUsers()
     {
        var users = await _userService.ListAllUsersAsync();
@@ -45,6 +46,7 @@ namespace LibraryManagement.WebAPI.Controllers;
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> DeleteOneUser(Guid id)
     {
         var exists = await _userService.EntityExistAsync(id);
@@ -75,6 +77,7 @@ namespace LibraryManagement.WebAPI.Controllers;
         return CreatedAtAction(nameof(GetOneUser), new { id = createdUser.Id }, createdUser);
     }
     [HttpPost("admin")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> CreateAdmin([FromBody] UserCreateDto userCreateDto)
     {
         if (userCreateDto == null)
@@ -93,6 +96,7 @@ namespace LibraryManagement.WebAPI.Controllers;
         return CreatedAtAction(nameof(GetOneUser), new { id = createdUser.Id }, createdUser);
     }
     [HttpGet("by-email/{email}")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<ActionResult<UserReadDto>> GetUserByEmial(string email)
     {
         var user = await _userService.GetByEmailAsync(email);
@@ -103,6 +107,7 @@ namespace LibraryManagement.WebAPI.Controllers;
         return Ok(user);
     }
     [HttpGet("with-active-loans")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> GetUserWithActiveLoan()
     {
         var users = await _userService.GetUsersWithActiveLoansAsync();
@@ -115,6 +120,7 @@ namespace LibraryManagement.WebAPI.Controllers;
         return Ok(users);
     }
     [HttpPut("{id}")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserUpdateDto userUpdateDto)
     {
         if (userUpdateDto == null)

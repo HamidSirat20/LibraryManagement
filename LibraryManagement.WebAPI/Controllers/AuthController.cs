@@ -1,4 +1,5 @@
-﻿using LibraryManagement.WebAPI.Models.Dtos;
+﻿using LibraryManagement.WebAPI.Models;
+using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -41,7 +42,8 @@ namespace LibraryManagement.WebAPI.Controllers
             claimsForToken.Add(new Claim("given_name", loginUser.FirstName ));
             claimsForToken.Add(new Claim("family_name", loginUser.LastName));
             claimsForToken.Add(new Claim("email", loginUser.Email));
-           
+            claimsForToken.Add(new Claim("role", loginUser.Role.ToString())); 
+
             //jwt 
             var jwtSecurityToken  = new JwtSecurityToken(
                 issuer: _configuration["Authentication:Issuer"],
@@ -68,7 +70,8 @@ namespace LibraryManagement.WebAPI.Controllers
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     Email = user.Email,
-                };
+                    Role = user.Role
+            };
         }
 
 
@@ -78,6 +81,7 @@ namespace LibraryManagement.WebAPI.Controllers
             public string FirstName { get; set; }
             public string LastName { get; set; }
             public string Email { get; set; }
+            public UserRole Role { get; set; }
 
         }
 

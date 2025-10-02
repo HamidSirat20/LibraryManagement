@@ -26,8 +26,8 @@ namespace LibraryManagement.WebAPI.Migrations
                     last_name = table.Column<string>(type: "text", nullable: false),
                     email = table.Column<string>(type: "text", nullable: false),
                     bio = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -42,8 +42,8 @@ namespace LibraryManagement.WebAPI.Migrations
                     name = table.Column<string>(type: "text", nullable: false),
                     address = table.Column<string>(type: "text", nullable: false),
                     website = table.Column<string>(type: "text", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -62,11 +62,11 @@ namespace LibraryManagement.WebAPI.Migrations
                     phone = table.Column<string>(type: "text", nullable: false),
                     address = table.Column<string>(type: "text", nullable: false),
                     avatar_url = table.Column<string>(type: "text", nullable: false),
-                    role = table.Column<int>(type: "integer", nullable: false),
-                    membership_start_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    membership_end_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    role = table.Column<int>(type: "user_role", nullable: false),
+                    membership_start_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    membership_end_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -81,12 +81,12 @@ namespace LibraryManagement.WebAPI.Migrations
                     title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                     cover_image_url = table.Column<string>(type: "text", nullable: false),
-                    published_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    genre = table.Column<int>(type: "integer", nullable: false),
+                    published_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    genre = table.Column<int>(type: "genre", nullable: false),
                     pages = table.Column<int>(type: "integer", nullable: false),
                     publisher_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -106,8 +106,8 @@ namespace LibraryManagement.WebAPI.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     author_id = table.Column<Guid>(type: "uuid", nullable: false),
                     book_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -133,13 +133,13 @@ namespace LibraryManagement.WebAPI.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
                     book_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    loan_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    due_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    return_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    loan_status = table.Column<int>(type: "integer", nullable: false),
+                    loan_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    due_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    return_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    loan_status = table.Column<int>(type: "loan_status", nullable: false),
                     late_fee = table.Column<decimal>(type: "numeric", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -165,10 +165,10 @@ namespace LibraryManagement.WebAPI.Migrations
                     id = table.Column<Guid>(type: "uuid", nullable: false),
                     book_id = table.Column<Guid>(type: "uuid", nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    reservation_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    reservation_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     status = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -195,11 +195,11 @@ namespace LibraryManagement.WebAPI.Migrations
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
                     loan_id = table.Column<Guid>(type: "uuid", nullable: false),
                     amount = table.Column<decimal>(type: "numeric", nullable: false),
-                    issued_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    paid_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    issued_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    paid_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     status = table.Column<int>(type: "integer", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
                 constraints: table =>
                 {
