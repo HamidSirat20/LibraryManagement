@@ -1,4 +1,5 @@
 ﻿using LibraryManagement.WebAPI.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
@@ -30,7 +31,6 @@ namespace LibraryManagement.WebAPI.Data
         {
             var dataSourceBuilder = new NpgsqlDataSourceBuilder(_config.GetConnectionString("DefaultConnection"));
 
-            // Explicitly map your enums
             dataSourceBuilder.MapEnum<UserRole>("user_role");
             dataSourceBuilder.MapEnum<Genre>("genre");
             dataSourceBuilder.MapEnum<FineStatus>("fine_status");
@@ -39,7 +39,7 @@ namespace LibraryManagement.WebAPI.Data
             var dataSource = dataSourceBuilder.Build();
 
             optionsBuilder
-                .UseNpgsql(dataSource) // ✅ use mapped data source
+                .UseNpgsql(dataSource) 
                 .UseSnakeCaseNamingConvention();
 
         }
