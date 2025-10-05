@@ -39,8 +39,8 @@ public class BooksController : ControllerBase
 
     }
 
-    [HttpGet("{id}", Name = "GetBookById")]
-    public async Task<IActionResult> GetBookById(Guid id, bool includePublisher = false)
+    [HttpGet("{id}",Name = "GetBookById")]
+    public async Task<IActionResult> GetBookById(Guid id,[FromQuery] bool includePublisher = false)
     {
         var book = await _bookService.GetByIdAsync(id, includePublisher);
         if (book is null)
@@ -73,7 +73,7 @@ public class BooksController : ControllerBase
         }
         var createdBook = await _bookService.CreateBookAsync(bookCreateDto);
         var bookReadDto = createdBook.MapBookToBookReadDto();
-        return CreatedAtAction("GetBookById", new { id = bookReadDto.Id }, bookReadDto);
+        return Created($"https://localhost:5064/api/v1/books/{bookReadDto.Id}", bookReadDto);
     }
 
     [HttpDelete("{id}")]

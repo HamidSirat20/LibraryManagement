@@ -70,7 +70,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
 
             if (id == Guid.Empty)
             {
-                throw new ArgumentException("User ID cannot be empty", nameof(id));
+                throw new ArgumentNullException("User ID cannot be empty", nameof(id));
             }
 
             try
@@ -91,10 +91,10 @@ namespace LibraryManagement.WebAPI.Services.Implementations
 
                 return user?.MapUserToUserReadDto();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                
-                throw new ArgumentNullException("An error occurred while retrieving the user.", ex);
+                throw new ArgumentNullException("An error occurred while retrieving the user.");
             }
         }
 

@@ -21,7 +21,7 @@ namespace LibraryManagement.WebAPI.Extensions
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
                     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
                     options.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
-                });
+                }).AddXmlDataContractSerializerFormatters();
 
             // Add services
             webApplication.Services.AddScoped<IBookService, BookService>();
@@ -88,8 +88,15 @@ namespace LibraryManagement.WebAPI.Extensions
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseDeveloperExceptionPage();
             }
-            app.UseHttpsRedirection();
+            else
+            {
+                app.UseExceptionHandler("/error");
+                app.UseHsts();
+            }
+
+                app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();

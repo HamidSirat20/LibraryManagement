@@ -3,8 +3,6 @@ using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
@@ -30,7 +28,6 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetOneUser(Guid id)
     {
-   
         var user = await _userService.GetByIdAsync(id);
         if(user == null)
         {
