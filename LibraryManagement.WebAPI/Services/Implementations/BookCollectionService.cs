@@ -3,6 +3,7 @@ using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.WebAPI.Services.Implementations
 {
@@ -12,8 +13,25 @@ namespace LibraryManagement.WebAPI.Services.Implementations
 
         public BookCollectionService(LibraryDbContext libraryDb)
         {
-            _dbContext = libraryDb;
+            _dbContext = libraryDb ?? throw new ArgumentNullException(nameof(libraryDb));
         }
+
+        public async Task<IEnumerable<BookReadDto>> GetBookCollectionAsync(IEnumerable<Guid> bookIds)
+        {
+            if (bookIds == null || !bookIds.Any())
+            {
+                throw new ArgumentNullException(nameof(bookIds));
+            }
+            var books = await _dbContext.Books
+                .Where(b => bookIds.Contains(b.Id))
+                .ToListAsync();
+            if (books.Count != bookIds.Count())
+            {
+                throw new KeyNotFoundException("One or more book IDs were not found.");
+            }
+            return books.Select(book => book.MapBookToBookReadDto());
+        }
+
         public async Task<IEnumerable<BookReadDto>> CreateBooksAsync(IEnumerable<BookCreateDto> bookCreateDtos)
         {
             if (bookCreateDtos == null || !bookCreateDtos.Any())

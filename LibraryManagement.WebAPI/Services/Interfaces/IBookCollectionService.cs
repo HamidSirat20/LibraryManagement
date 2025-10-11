@@ -5,6 +5,6 @@ namespace LibraryManagement.WebAPI.Services.Interfaces
     public interface IBookCollectionService
     {
         Task<IEnumerable<BookReadDto>> CreateBooksAsync(IEnumerable<BookCreateDto> bookCreateDtos);
-
+        Task<IEnumerable<BookReadDto>> GetBookCollectionAsync(IEnumerable<Guid> bookIds);
     }
 }
