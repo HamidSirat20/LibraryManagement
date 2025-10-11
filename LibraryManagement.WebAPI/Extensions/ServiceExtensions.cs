@@ -15,7 +15,10 @@ namespace LibraryManagement.WebAPI.Extensions
         {
             // Add services to the container.
 
-            webApplication.Services.AddControllers()
+            webApplication.Services.AddControllers( configure =>
+            {
+                configure.ReturnHttpNotAcceptable = true;
+            })
                 .AddNewtonsoftJson(options =>
                 {
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
@@ -26,6 +29,7 @@ namespace LibraryManagement.WebAPI.Extensions
             // Add services
             webApplication.Services.AddScoped<IBookService, BookService>();
             webApplication.Services.AddScoped<IUserService, UserService>();
+            webApplication.Services.AddScoped<IBookCollectionService, BookCollectionService>();
 
             // Add DbContext
             webApplication.Services.AddDbContext<LibraryDbContext>(options =>
@@ -39,10 +43,14 @@ namespace LibraryManagement.WebAPI.Extensions
                         npgsqlOptions.MapEnum<LoanStatus>("loan_status");
                     });
             });
-
+            //add routing
+            webApplication.Services.AddRouting(options =>
+            {
+                options.LowercaseUrls = true;
+                options.AppendTrailingSlash = false;
+            });
             webApplication.Services.AddEndpointsApiExplorer();
             webApplication.Services.AddSwaggerGen();
-
 
             // Add Authentication
             webApplication.Services.AddAuthentication("Bearer")

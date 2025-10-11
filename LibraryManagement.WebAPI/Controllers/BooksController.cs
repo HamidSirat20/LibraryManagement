@@ -12,7 +12,7 @@ namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
 [Authorize]
-[Route("api/v{version.apiVersion}/[controller]")]
+[Route("api/v{version:ApiVersion}/[controller]")]
 [ApiVersion("1.0")]
 public class BooksController : ControllerBase
 {
@@ -73,7 +73,7 @@ public class BooksController : ControllerBase
         }
         var createdBook = await _bookService.CreateBookAsync(bookCreateDto);
         var bookReadDto = createdBook.MapBookToBookReadDto();
-        return Created($"https://localhost:5064/api/v1/books/{bookReadDto.Id}", bookReadDto);
+        return CreatedAtRoute("GetBookById", new { id = bookReadDto.Id,includePublisher=false }, bookReadDto);
     }
 
     [HttpDelete("{id}")]

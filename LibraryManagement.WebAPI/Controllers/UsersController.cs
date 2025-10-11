@@ -8,7 +8,7 @@ namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
 //[Authorize]
-[Route("api/v{version.ApiVersion}/[controller]")]
+[Route("api/v{version:ApiVersion}/[controller]")]
 [ApiVersion("1.0")]
 public class UsersController : ControllerBase
 {
@@ -19,13 +19,14 @@ public class UsersController : ControllerBase
         _userService = userService;
     }
     [HttpGet]
+    [HttpHead]
     [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> ListALLUsers()
     {
        var users = await _userService.ListAllUsersAsync();
         return Ok(users);
     }
-    [HttpGet("{id}")]
+    [HttpGet("{id}",Name = "GetOneUser")]
     public async Task<IActionResult> GetOneUser(Guid id)
     {
         var user = await _userService.GetByIdAsync(id);
@@ -73,7 +74,10 @@ public class UsersController : ControllerBase
         {
             return BadRequest("User is empty");
         }
-        return CreatedAtAction(nameof(GetOneUser), new { id = createdUser.Id }, createdUser);
+        return CreatedAtRoute(
+                "GetOneUser",
+                 new { id = createdUser.Id },
+                 createdUser);
     }
     [HttpPost("admin")]
     [Authorize(Policy = "AdminCanAccess")]
@@ -92,11 +96,11 @@ public class UsersController : ControllerBase
         {
             return BadRequest("User is empty");
         }
-        return CreatedAtAction(nameof(GetOneUser), new { id = createdUser.Id }, createdUser);
+        return CreatedAtRoute("GetOneUser", new { id = createdUser.Id }, createdUser);
     }
     [HttpGet("by-email/{email}")]
     [Authorize(Policy = "AdminCanAccess")]
-    public async Task<ActionResult<UserReadDto>> GetUserByEmial(string email)
+    public async Task<ActionResult<UserReadDto>> GetUserByEmail(string email)
     {
         var user = await _userService.GetByEmailAsync(email);
         if (user == null)

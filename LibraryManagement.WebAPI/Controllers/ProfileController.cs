@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace LibraryManagement.WebAPI.Controllers
 {
-    [Route("api/v{version.apiVersion}/users/[controller]")]
+    [Route("api/v{version:ApiVersion}/users/[controller]")]
     [ApiVersion("1.0")]
     [ApiController]
     public class ProfileController : ControllerBase
