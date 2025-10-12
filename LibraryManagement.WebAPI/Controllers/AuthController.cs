@@ -24,7 +24,7 @@ namespace LibraryManagement.WebAPI.Controllers
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
-        [HttpPost("authenticate")]
+        [HttpPost()]
         public async Task<ActionResult<string>> Authenticate(LoginDto loginDto)
         {
             var loginUser =await ValidateUser(loginDto);

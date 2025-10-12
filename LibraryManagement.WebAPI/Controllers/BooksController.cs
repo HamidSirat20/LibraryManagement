@@ -6,12 +6,14 @@ using LibraryManagement.WebAPI.Services.ORM;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
-[Authorize]
+//[Authorize]
 [Route("api/v{version:ApiVersion}/[controller]")]
 [ApiVersion("1.0")]
 public class BooksController : ControllerBase
@@ -121,7 +123,7 @@ public class BooksController : ControllerBase
 
 
     [HttpPatch("{id}")]
-    [Authorize(Policy = "AdminCanAccess")]
+   // [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> PartiallyUpdateBookAsync(Guid id, [FromBody] JsonPatchDocument<BookUpdateDto> patchDocument)
     {
         var existingBook = await _bookService.GetByIdAsync(id);
@@ -134,6 +136,11 @@ public class BooksController : ControllerBase
 
         var bookToPatchDto = existingBook.MapBookToBookUpdateDto();
         patchDocument.ApplyTo(bookToPatchDto, ModelState);
+
+        if(!TryValidateModel(bookToPatchDto))
+        {
+            return ValidationProblem(ModelState);
+        }
 
         if (!ModelState.IsValid)
         {
@@ -148,8 +155,28 @@ public class BooksController : ControllerBase
 
       var bookForUpdate =  bookToPatchDto.MapBookUpdateDtoToBook(existingBook);
         await _bookService.PartiallyUpdateBookAsync(bookForUpdate);
-       await _bookService.SaveChangesAsync();
         return NoContent();
+    }
+
+    [HttpOptions()]
+    public IActionResult GetBooksOptions()
+    {
+        Response.Headers.Add("Allow", "GET,HEAD,OPTIONS,POST");
+        return Ok();
+    }
+    [HttpOptions("{id}")]
+    public IActionResult GetBookOptionsWithId(Guid id)
+    {
+        Response.Headers.Add("Allow", "GET,PATCH,PUT");
+        return Ok();
+    }
+
+   public override ActionResult ValidationProblem(
+        ModelStateDictionary modelStateDictionary)
+    {
+        var options = HttpContext.RequestServices
+            .GetRequiredService<IOptions<ApiBehaviorOptions>>();
+        return (ActionResult)options.Value.InvalidModelStateResponseFactory(ControllerContext);
     }
 
 }

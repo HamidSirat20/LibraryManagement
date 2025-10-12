@@ -141,6 +141,18 @@ public class UsersController : ControllerBase
         }
         return Ok(updatedUser);
     }
+    [HttpOptions()]
+    public IActionResult GetUsersOptions()
+    {
+        Response.Headers.Add("Allow", "GET,HEAD,OPTIONS,POST");
+        return Ok();
+    }
+    [HttpOptions("{id}")]
+    public IActionResult GetUsersOptionWithId(Guid id)
+    {
+        Response.Headers.Add("Allow", "GET,PATCH,PUT");
+        return Ok();
+    }
 
 }
 

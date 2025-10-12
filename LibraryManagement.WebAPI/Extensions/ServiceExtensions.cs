@@ -3,6 +3,7 @@ using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Converters;
@@ -18,13 +19,33 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddControllers( configure =>
             {
                 configure.ReturnHttpNotAcceptable = true;
+                
             })
                 .AddNewtonsoftJson(options =>
                 {
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
                     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
                     options.SerializerSettings.Formatting = Newtonsoft.Json.Formatting.Indented;
-                }).AddXmlDataContractSerializerFormatters();
+                }).AddXmlDataContractSerializerFormatters()
+                .ConfigureApiBehaviorOptions(setupAction =>
+                {
+                    setupAction.InvalidModelStateResponseFactory = context =>
+                    {
+                        var problemDetails = new ValidationProblemDetails(context.ModelState)
+                        {
+                            Type = "https://www.librarymanagement.com/modelvalidationproblem",
+                            Title = "One or more model validation errors occurred.",
+                            Status = StatusCodes.Status422UnprocessableEntity,
+                            Detail = "See the errors property for details.",
+                            Instance = context.HttpContext.Request.Path
+                        };
+                        problemDetails.Extensions.Add("traceId", context.HttpContext.TraceIdentifier);
+                        return new UnprocessableEntityObjectResult(problemDetails)
+                        {
+                            ContentTypes = { "application/problem+json" }
+                        };
+                    };
+                });
 
             // Add services
             webApplication.Services.AddScoped<IBookService, BookService>();

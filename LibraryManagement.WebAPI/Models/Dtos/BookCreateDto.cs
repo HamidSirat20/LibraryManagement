@@ -1,22 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using LibraryManagement.WebAPI.Models.Dtos.Common;
+using System.ComponentModel.DataAnnotations;
 
 namespace LibraryManagement.WebAPI.Models.Dtos;
 
-        public class BookCreateDto
-        {
-            [Required]
-            public string Title { get; set; }
-            [StringLength(1000, ErrorMessage = "Description cannot be longer than 1000 characters.")]
-            [DataType(DataType.MultilineText)]
-            public string Description { get; set; }
-            [Required]
-            public string CoverImageUrl { get; set; } = string.Empty;
-            [Required]
-            [DataType(DataType.Date)]
-            public DateTime PublishedDate { get; set; }
-            public Genre Genre { get; set; }
-            public int Pages { get; set; }
-            public ICollection<Guid> AuthorIds { get; set; }
-            public Guid PublisherId { get; set; }
+public class BookCreateDto : BookForManipulation
+{
+    [Required(ErrorMessage = "At least one author is required.")]
+    [MinLength(1, ErrorMessage = "At least one author is required.")]
+    public ICollection<Guid> AuthorIds { get; set; } = new List<Guid>();
+    public Guid PublisherId { get; set; }
 }
   

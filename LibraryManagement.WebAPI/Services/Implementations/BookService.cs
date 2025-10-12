@@ -159,8 +159,10 @@ public class BookService : IBookService
         {
             throw new ArgumentNullException(nameof(book));
         }
-        await SaveChangesAsync();
+            _dbContext.Books.Update(book);
+        await _dbContext.SaveChangesAsync();
         return book;
     }
+
 }
 
