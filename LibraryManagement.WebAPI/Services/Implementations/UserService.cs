@@ -4,7 +4,6 @@ using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using LibraryManagement.WebAPI.Services.ORM;
-using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryManagement.WebAPI.Services.Implementations
 {

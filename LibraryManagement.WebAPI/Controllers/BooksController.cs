@@ -1,4 +1,6 @@
 ﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.Helpers;
+using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
@@ -26,10 +28,26 @@ public class BooksController : ControllerBase
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _bookService = bookService ?? throw new ArgumentNullException(nameof(bookService));
     }
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<BookWithPublisherDto>>> ListAllBooks([FromQuery] QueryOptions queryOptions)
+
+    [HttpGet(Name ="GetAllBooks")]
+    public async Task<ActionResult<PaginatedResponse<BookWithPublisherDto>>> ListAllBooks([FromQuery] QueryOptions queryOptions)
     {
-        var (books, paginationMetadata) = await _bookService.ListAllBooksAsync(queryOptions);
+        var books = await _bookService.ListAllBooksAsync(queryOptions);
+        //var paginationMetadata
+        var previousPageLink = books.HasPrevious ? GenerateBooksResourceUri(queryOptions, ResourceUriType.PreviousPage) : null;
+       // next page link
+        var nextPageLink = books.HasNext ? GenerateBooksResourceUri(queryOptions, ResourceUriType.NextPage) : null;
+
+        // var paginationMetadata 
+        var paginationMetadata = new
+        {
+            totalCount = books.TotalRecords,
+            pageSize = books.PageSize,
+            currentPage = books.CurrentPage,
+            totalPages = books.TotalPages,
+            previousPageLink,
+            nextPageLink
+        };
 
         var bookWithPublisherDto = new List<BookWithPublisherDto>();
         foreach (var book in books)
@@ -39,6 +57,45 @@ public class BooksController : ControllerBase
         Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
         return Ok(bookWithPublisherDto);
 
+    }
+    private string? GenerateBooksResourceUri(QueryOptions queryOptions, ResourceUriType type)
+    {
+        switch (type)
+        {
+            case ResourceUriType.PreviousPage:
+                return Url.Link("GetAllBooks",
+                    new
+                    {
+                        page = queryOptions.PageNumber - 1,
+                        size = queryOptions.PageSize,
+                        search = queryOptions.SearchTerm,
+                        genre = queryOptions.Genre,
+                        sort = queryOptions.SortBy,
+                        desc = queryOptions.IsDescending
+                    });
+            case ResourceUriType.NextPage:
+                return Url.Link("GetAllBooks",
+                    new
+                    {
+                        page = queryOptions.PageNumber + 1,
+                        size = queryOptions.PageSize,
+                        search = queryOptions.SearchTerm,
+                        genre = queryOptions.Genre,
+                        sort = queryOptions.SortBy,
+                        desc = queryOptions.IsDescending
+                    });
+            default:
+                return Url.Link("GetAllBooks",
+                    new
+                    {
+                        page = queryOptions.PageNumber,
+                        size = queryOptions.PageSize,
+                        search = queryOptions.SearchTerm,
+                        genre = queryOptions.Genre,
+                        sort = queryOptions.SortBy,
+                        desc = queryOptions.IsDescending
+                    });
+        }
     }
 
     [HttpGet("{id}",Name = "GetBookById")]
@@ -170,8 +227,8 @@ public class BooksController : ControllerBase
         Response.Headers.Add("Allow", "GET,PATCH,PUT");
         return Ok();
     }
-
-   public override ActionResult ValidationProblem(
+    // will use this method to return 422 UnprocessableEntity response
+    public override ActionResult ValidationProblem(
         ModelStateDictionary modelStateDictionary)
     {
         var options = HttpContext.RequestServices

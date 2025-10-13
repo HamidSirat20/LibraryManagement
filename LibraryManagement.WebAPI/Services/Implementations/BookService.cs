@@ -1,4 +1,5 @@
 ﻿using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
@@ -11,7 +12,6 @@ namespace LibraryManagement.WebAPI.Services.Implementations;
 public class BookService : IBookService
 {
     private readonly LibraryDbContext _dbContext;
-    const int MaxPageSize = 20;
 
     public BookService(LibraryDbContext dbContext)
     {
@@ -79,8 +79,13 @@ public class BookService : IBookService
                 .FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<(IEnumerable<Book>,PaginationMetadata)> ListAllBooksAsync(QueryOptions queryOptions)
+    public async Task<PaginatedResponse<Book>> ListAllBooksAsync(QueryOptions queryOptions)
     {
+        if (queryOptions == null)
+        {
+            throw new ArgumentNullException(nameof(queryOptions));
+        }
+
         var query = _dbContext.Books
             .Include(a => a.BookAuthors)
             .ThenInclude(ba => ba.Author)
@@ -88,6 +93,13 @@ public class BookService : IBookService
             .AsNoTracking()
             .AsQueryable();
 
+        //filter based on genre
+        if (queryOptions.Genre.HasValue)
+        {
+            query = query.Where(b => b.Genre == queryOptions.Genre.Value);
+        }
+
+        //search query
         if (!string.IsNullOrWhiteSpace(queryOptions.SearchTerm))
         {
             var searchTerm = queryOptions.SearchTerm.Trim().ToLower();
@@ -98,6 +110,8 @@ public class BookService : IBookService
                                      b.BookAuthors.Any(ba => ba.Author.FirstName.ToLower().Contains(searchTerm) ||
                                                             ba.Author.LastName.ToLower().Contains(searchTerm)));
         }
+
+        //sort
         if (!string.IsNullOrWhiteSpace(queryOptions.SortBy))
         {
             var sortBy = queryOptions.SortBy.Trim().ToLower();
@@ -124,13 +138,10 @@ public class BookService : IBookService
 
 
         }
-        //pagination metadata
-        var ItemCount = await query.CountAsync();
-        var paginationMetadata = new PaginationMetadata(ItemCount, queryOptions.PageNumber, queryOptions.PageSize);
 
-        var collection = await query.Skip(queryOptions.PageSize * (queryOptions.PageNumber - 1)).Take(queryOptions.PageSize).ToListAsync();
-        return (collection, paginationMetadata);
-        
+        //pagination 
+        return await PaginatedResponse<Book>.CreateAsync(query, queryOptions.PageNumber, queryOptions.PageSize);
+
     }
 
     public async Task<Book> UpdateBookAsync(Guid id, BookUpdateDto bookUpdateDto)
