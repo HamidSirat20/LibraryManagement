@@ -1,6 +1,7 @@
 ﻿using Asp.Versioning;
 using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Services.ORM;
+using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -13,10 +14,12 @@ namespace LibraryManagement.WebAPI.Controllers
     public class ProfileController : ControllerBase
     {
         private readonly LibraryDbContext _context;
+        private readonly IUserMapper _userMapper;
 
-        public ProfileController(LibraryDbContext context)
+        public ProfileController(LibraryDbContext context, IUserMapper userMapper)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _userMapper = userMapper;
         }
         [HttpGet]
         public async Task<IActionResult> GetUserProfile()
@@ -39,7 +42,7 @@ namespace LibraryManagement.WebAPI.Controllers
             {
                 return NotFound("User not found");
             }
-            return Ok(user.MapUserToUserReadDto());
+            return Ok(_userMapper.ToReadDto( user));
         }
   
     }

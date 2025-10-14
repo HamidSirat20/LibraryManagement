@@ -6,19 +6,19 @@ public class QueryOptions
     const int MaxPageSize = 50;
     [FromQuery(Name = "search")]
     public string? SearchTerm { get; set; }
-    [FromQuery(Name = "page")]
+    [FromQuery(Name = "pageNumber")]
     public int PageNumber { get; set; } = 1;
     [FromQuery(Name = "genre")]
     public Genre? Genre { get; set; } = null;
 
-    [FromQuery(Name = "size")]
+    [FromQuery(Name = "pageSize")]
     private int _pageSize { get; set; } = 20;
 
     [FromQuery(Name = "sort")]
-    public string? SortBy { get; set; } = "Title";
+    public string OrderBy { get; set; } = "Title";
 
     [FromQuery(Name = "desc")]
-    public bool? IsDescending { get; set; } = false;
+    public bool IsDescending { get; set; } = false;
     public int PageSize
     {
         get => _pageSize;

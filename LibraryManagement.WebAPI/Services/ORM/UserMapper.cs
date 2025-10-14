@@ -1,12 +1,12 @@
 ﻿using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
-using System.Net;
-using System.Numerics;
+using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 
 namespace LibraryManagement.WebAPI.Services.ORM;
-    public static class UserMapper
-    {
-    public static UserReadDto MapUserToUserReadDto(this User user)
+
+public  class UserMapper : IUserMapper
+{
+    public UserReadDto ToReadDto(User user)
     {
         if (user == null) return null;
 
@@ -25,7 +25,7 @@ namespace LibraryManagement.WebAPI.Services.ORM;
         };
     }
 
-    public static User MapUserCreateDtoToUser(this UserCreateDto userCreateDto)
+    public User ToEntity(UserCreateDto userCreateDto)
     {
         if (userCreateDto == null) return null;
 
@@ -35,15 +35,16 @@ namespace LibraryManagement.WebAPI.Services.ORM;
             email: userCreateDto.Email,
             phone: userCreateDto.Phone,
             address: userCreateDto.Address,
-            membershipStartDate: DateTime.UtcNow, 
-            membershipEndDate: DateTime.UtcNow.AddYears(1) 
+            membershipStartDate: DateTime.UtcNow,
+            membershipEndDate: DateTime.UtcNow.AddYears(1)
         )
         {
-            Password = userCreateDto.Password, 
+            Password = userCreateDto.Password,
             AvatarUrl = userCreateDto.AvatarUrl
         };
     }
-    public static UserUpdateDto MapToUserUpdateDto(this User user)
+
+    public UserUpdateDto ToUpdateDto(User user)
     {
         if (user == null) return null;
 
@@ -57,7 +58,8 @@ namespace LibraryManagement.WebAPI.Services.ORM;
             AvatarUrl = user.AvatarUrl
         };
     }
-    public static UserCreateDto MapToUserCreateDto(this User user)
+
+    public UserCreateDto ToCreateDto(User user)
     {
         if (user == null) return null;
 
@@ -69,27 +71,21 @@ namespace LibraryManagement.WebAPI.Services.ORM;
             Phone = user.Phone,
             Address = user.Address,
             AvatarUrl = user.AvatarUrl,
-            Password = string.Empty 
+            Password = string.Empty
         };
     }
 
-    public static User MapUserUpdateDtoToUser(this UserUpdateDto  userUpdateDto, User user)
+    public User UpdateFromDto(User user, UserUpdateDto userUpdateDto)
     {
-        if (userUpdateDto == null) return null;
+        if (userUpdateDto == null) return user;
 
-        if (userUpdateDto.FirstName != null) 
-            user.FirstName = userUpdateDto.FirstName;
-        if (userUpdateDto.LastName != null)
-            user.LastName = userUpdateDto.LastName;
-        if (userUpdateDto.Email != null)
-            user.Email = userUpdateDto.Email;
-        if (userUpdateDto.Phone != null)
-            user.Phone = userUpdateDto.Phone;
-        if (userUpdateDto.Address != null)
-            user.Address = userUpdateDto.Address;
-        if (userUpdateDto.AvatarUrl != null)
-            user.AvatarUrl = userUpdateDto.AvatarUrl;
+        user.FirstName = userUpdateDto.FirstName ?? user.FirstName;
+        user.LastName = userUpdateDto.LastName ?? user.LastName;
+        user.Email = userUpdateDto.Email ?? user.Email;
+        user.Phone = userUpdateDto.Phone ?? user.Phone;
+        user.Address = userUpdateDto.Address ?? user.Address;
+        user.AvatarUrl = userUpdateDto.AvatarUrl ?? user.AvatarUrl;
+
         return user;
     }
 }
-

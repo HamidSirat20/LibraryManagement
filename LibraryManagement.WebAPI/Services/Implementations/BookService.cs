@@ -5,6 +5,7 @@ using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
+using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.WebAPI.Services.Implementations;
@@ -12,10 +13,12 @@ namespace LibraryManagement.WebAPI.Services.Implementations;
 public class BookService : IBookService
 {
     private readonly LibraryDbContext _dbContext;
+    private readonly IBookMapper _bookMapper;
 
-    public BookService(LibraryDbContext dbContext)
+    public BookService(LibraryDbContext dbContext, IBookMapper bookMapper)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _bookMapper = bookMapper;
     }
     public async Task<Book> CreateBookAsync(BookCreateDto bookCreateDto)
     {
@@ -111,10 +114,10 @@ public class BookService : IBookService
                                                             ba.Author.LastName.ToLower().Contains(searchTerm)));
         }
 
-        //sort
-        if (!string.IsNullOrWhiteSpace(queryOptions.SortBy))
+        //orderby
+        if (!string.IsNullOrWhiteSpace(queryOptions.OrderBy))
         {
-            var sortBy = queryOptions.SortBy.Trim().ToLower();
+            var sortBy = queryOptions.OrderBy.Trim().ToLower();
             var isDescending = queryOptions.IsDescending;
             var allowedSortFields = new[] { "title", "publisheddate", "genre", "publisher","author" };
 
@@ -154,7 +157,7 @@ public class BookService : IBookService
         if (existingBook == null)
             throw new ArgumentException("Book not found");
 
-        var bookToUpdate = bookUpdateDto.MapBookUpdateDtoToBook(existingBook);
+        var bookToUpdate = _bookMapper.UpdateFromDto(existingBook,bookUpdateDto);
         await _dbContext.SaveChangesAsync();
 
         return existingBook;

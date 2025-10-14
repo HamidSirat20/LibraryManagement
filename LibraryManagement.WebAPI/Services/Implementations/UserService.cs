@@ -3,17 +3,19 @@ using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using LibraryManagement.WebAPI.Services.ORM;
+using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 
 namespace LibraryManagement.WebAPI.Services.Implementations
 {
     public class UserService : IUserService
     {
         private readonly LibraryDbContext _dbContext;
+        private readonly IUserMapper _userMapper;
 
-        public UserService(LibraryDbContext libraryDbContext)
+        public UserService(LibraryDbContext libraryDbContext, IUserMapper userMapper)
         {
             _dbContext = libraryDbContext ?? throw new ArgumentNullException(nameof(libraryDbContext));
+            _userMapper = userMapper;
         }
         public Task<bool> ChangePassword(ChangePasswordDto changePasswordDto)
         {
@@ -22,20 +24,20 @@ namespace LibraryManagement.WebAPI.Services.Implementations
 
         public async Task<UserReadDto> CreateAdminAsync(UserCreateDto userCreateDto)
         {
-            var user = userCreateDto.MapUserCreateDtoToUser();
+            var user = _userMapper.ToEntity(userCreateDto);
             user.Role = UserRole.Admin;
             await _dbContext.Users.AddAsync(user);
             _dbContext.SaveChanges();
-            return user.MapUserToUserReadDto();
+            return _userMapper.ToReadDto(user);
         }
 
         public async Task<UserReadDto?> CreateUserAsync(UserCreateDto userCreateDto)
         {
-            var user = userCreateDto.MapUserCreateDtoToUser();
+            var user = _userMapper.ToEntity(userCreateDto);
             user.Role = UserRole.User;
             await _dbContext.Users.AddAsync(user);
             _dbContext.SaveChanges();
-            return user.MapUserToUserReadDto();
+            return _userMapper.ToReadDto(user);
         }
 
         public async Task DeleteByIdAsync(Guid id)
@@ -61,7 +63,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             {
                 return null;
             }
-            return user.MapUserToUserReadDto();
+            return _userMapper.ToReadDto(user);
         }
 
         public async Task<UserReadDto?> GetByIdAsync(Guid id, bool includeLoansAndReservations = false)
@@ -88,7 +90,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
                     .AsNoTracking() 
                     .FirstOrDefaultAsync(x => x.Id == id);
 
-                return user?.MapUserToUserReadDto();
+                return _userMapper.ToReadDto(user);
             }
             catch (Exception)
             {
@@ -120,7 +122,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             var userReadDto = new List<UserReadDto>();
             foreach (var user in users)
             {
-                userReadDto.Add(user.MapUserToUserReadDto());
+                userReadDto.Add(_userMapper.ToReadDto(user));
             }
             return userReadDto;
         }
@@ -134,19 +136,19 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             }
             user.Role = UserRole.Admin;
             await _dbContext.SaveChangesAsync();
-            return user.MapUserToUserReadDto();
+            return _userMapper.ToReadDto(user);
         }
 
         public async Task<UserReadDto> UpdateUserAsync(Guid id, UserUpdateDto userUpdateDto)
         {
-            var userToUpdate =await _dbContext.Users.FirstOrDefaultAsync(x => x.Id ==id);
-            if(userToUpdate == null)
+            var user =await _dbContext.Users.FirstOrDefaultAsync(x => x.Id ==id);
+            if(user == null)
             {
-                throw new ArgumentNullException(nameof(userToUpdate), "User not found");
+                throw new ArgumentNullException(nameof(user), "User not found");
             }
-             userUpdateDto.MapUserUpdateDtoToUser(userToUpdate);
+             _userMapper.UpdateFromDto(user, userUpdateDto);
             await _dbContext.SaveChangesAsync();
-            return userToUpdate.MapUserToUserReadDto();
+            return _userMapper.ToReadDto(user);
         }
     }
 }

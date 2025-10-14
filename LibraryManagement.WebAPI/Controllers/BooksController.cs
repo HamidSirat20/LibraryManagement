@@ -5,6 +5,7 @@ using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
+using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -22,11 +23,13 @@ public class BooksController : ControllerBase
 {
     private readonly ILogger<BooksController> _logger;
     private readonly IBookService _bookService;
+    private readonly IBookMapper _bookMapper;
 
-    public BooksController(ILogger<BooksController> logger, IBookService bookService)
+    public BooksController(ILogger<BooksController> logger, IBookService bookService, IBookMapper bookMapper)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _bookService = bookService ?? throw new ArgumentNullException(nameof(bookService));
+        _bookMapper = bookMapper;
     }
 
     [HttpGet(Name ="GetAllBooks")]
@@ -52,7 +55,7 @@ public class BooksController : ControllerBase
         var bookWithPublisherDto = new List<BookWithPublisherDto>();
         foreach (var book in books)
         {
-            bookWithPublisherDto.Add(book.MapBookToBookWithPublisherDto());
+            bookWithPublisherDto.Add(_bookMapper.ToBookWithPublisherDto(book));
         }
         Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
         return Ok(bookWithPublisherDto);
@@ -70,7 +73,7 @@ public class BooksController : ControllerBase
                         size = queryOptions.PageSize,
                         search = queryOptions.SearchTerm,
                         genre = queryOptions.Genre,
-                        sort = queryOptions.SortBy,
+                        sort = queryOptions.OrderBy,
                         desc = queryOptions.IsDescending
                     });
             case ResourceUriType.NextPage:
@@ -81,7 +84,7 @@ public class BooksController : ControllerBase
                         size = queryOptions.PageSize,
                         search = queryOptions.SearchTerm,
                         genre = queryOptions.Genre,
-                        sort = queryOptions.SortBy,
+                        sort = queryOptions.OrderBy,
                         desc = queryOptions.IsDescending
                     });
             default:
@@ -92,7 +95,7 @@ public class BooksController : ControllerBase
                         size = queryOptions.PageSize,
                         search = queryOptions.SearchTerm,
                         genre = queryOptions.Genre,
-                        sort = queryOptions.SortBy,
+                        sort = queryOptions.OrderBy,
                         desc = queryOptions.IsDescending
                     });
         }
@@ -110,10 +113,10 @@ public class BooksController : ControllerBase
 
         if (includePublisher)
         {
-            var bookDto = book.MapBookToBookWithPublisherDto();
+            var bookDto =_bookMapper.ToBookWithPublisherDto(book);
             return Ok(bookDto);
         }
-        var bookWithPublisherDto = book.MapBookToBookWithoutPublisherDto();
+        var bookWithPublisherDto = _bookMapper.ToBookWithoutPublisherDto( book);
         return Ok(bookWithPublisherDto);
     }
     [HttpPost]
@@ -131,7 +134,7 @@ public class BooksController : ControllerBase
             return UnprocessableEntity(ModelState);
         }
         var createdBook = await _bookService.CreateBookAsync(bookCreateDto);
-        var bookReadDto = createdBook.MapBookToBookReadDto();
+        var bookReadDto = _bookMapper.ToBookReadDto(createdBook);
         return CreatedAtRoute("GetBookById", new { id = bookReadDto.Id,includePublisher=false }, bookReadDto);
     }
 
@@ -191,7 +194,7 @@ public class BooksController : ControllerBase
             return NotFound();
         }
 
-        var bookToPatchDto = existingBook.MapBookToBookUpdateDto();
+        var bookToPatchDto = _bookMapper.ToBookUpdateDto( existingBook);
         patchDocument.ApplyTo(bookToPatchDto, ModelState);
 
         if(!TryValidateModel(bookToPatchDto))
@@ -210,7 +213,7 @@ public class BooksController : ControllerBase
             return UnprocessableEntity(ModelState);
         }
 
-      var bookForUpdate =  bookToPatchDto.MapBookUpdateDtoToBook(existingBook);
+      var bookForUpdate = _bookMapper.UpdateFromDto(existingBook, bookToPatchDto);
         await _bookService.PartiallyUpdateBookAsync(bookForUpdate);
         return NoContent();
     }

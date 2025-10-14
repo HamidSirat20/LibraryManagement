@@ -63,7 +63,6 @@ namespace LibraryManagement.WebAPI.Controllers
         private async Task< UserValidateDto> ValidateUser(LoginDto loginDto)
         {
             var user = await _userService.GetByEmailAsync(loginDto.Email);
-            Console.WriteLine("from meth"+ user.Id);
             if (user == null)
                 return null;
             return new UserValidateDto

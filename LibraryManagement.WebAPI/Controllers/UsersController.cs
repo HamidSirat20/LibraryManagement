@@ -20,7 +20,7 @@ public class UsersController : ControllerBase
     }
     [HttpGet]
     [HttpHead]
-    [Authorize(Policy = "AdminCanAccess")]
+    //[Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> ListALLUsers()
     {
        var users = await _userService.ListAllUsersAsync();

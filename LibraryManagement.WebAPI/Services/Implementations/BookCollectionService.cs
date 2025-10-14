@@ -3,6 +3,7 @@ using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
+using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.WebAPI.Services.Implementations
@@ -10,10 +11,12 @@ namespace LibraryManagement.WebAPI.Services.Implementations
     public class BookCollectionService : IBookCollectionService
     {
         private readonly LibraryDbContext _dbContext;
+        private readonly IBookMapper _bookMapper;
 
-        public BookCollectionService(LibraryDbContext libraryDb)
+        public BookCollectionService(LibraryDbContext libraryDb, IBookMapper bookMapper)
         {
             _dbContext = libraryDb ?? throw new ArgumentNullException(nameof(libraryDb));
+            _bookMapper = bookMapper;
         }
 
         public async Task<IEnumerable<BookReadDto>> GetBookCollectionAsync(IEnumerable<Guid> bookIds)
@@ -29,7 +32,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             {
                 throw new KeyNotFoundException("One or more book IDs were not found.");
             }
-            return books.Select(book => book.MapBookToBookReadDto());
+            return books.Select(book => _bookMapper.ToBookReadDto(book));
         }
 
         public async Task<IEnumerable<BookReadDto>> CreateBooksAsync(IEnumerable<BookCreateDto> bookCreateDtos)
@@ -68,7 +71,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             }
 
             await _dbContext.SaveChangesAsync();
-            return books.Select(book=>book.MapBookToBookReadDto());
+            return books.Select(book=> _bookMapper.ToBookReadDto(book));
         }
     }
 }

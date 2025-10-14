@@ -3,6 +3,9 @@ using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
+using LibraryManagement.WebAPI.Services.ORM;
+using LibraryManagement.WebAPI.Services.ORM.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -51,6 +54,8 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<IBookService, BookService>();
             webApplication.Services.AddScoped<IUserService, UserService>();
             webApplication.Services.AddScoped<IBookCollectionService, BookCollectionService>();
+            webApplication.Services.AddScoped<IUserMapper, UserMapper>();
+            webApplication.Services.AddScoped<IBookMapper, BookMapper>();
 
             // Add DbContext
             webApplication.Services.AddDbContext<LibraryDbContext>(options =>
