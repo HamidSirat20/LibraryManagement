@@ -4,7 +4,6 @@ using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
-using LibraryManagement.WebAPI.Services.ORM;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
@@ -33,7 +32,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpGet(Name ="GetAllBooks")]
-    public async Task<ActionResult<PaginatedResponse<BookWithPublisherDto>>> ListAllBooks([FromQuery] QueryOptions queryOptions)
+    public async Task<IActionResult> ListAllBooks([FromQuery] QueryOptions queryOptions)
     {
         var books = await _bookService.ListAllBooksAsync(queryOptions);
         //var paginationMetadata
@@ -58,7 +57,7 @@ public class BooksController : ControllerBase
             bookWithPublisherDto.Add(_bookMapper.ToBookWithPublisherDto(book));
         }
         Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
-        return Ok(bookWithPublisherDto);
+        return Ok(bookWithPublisherDto.ShapeFields(queryOptions.Fields));
 
     }
     private string? GenerateBooksResourceUri(QueryOptions queryOptions, ResourceUriType type)
@@ -69,6 +68,7 @@ public class BooksController : ControllerBase
                 return Url.Link("GetAllBooks",
                     new
                     {
+                        Fields = queryOptions.Fields,
                         page = queryOptions.PageNumber - 1,
                         size = queryOptions.PageSize,
                         search = queryOptions.SearchTerm,
@@ -80,6 +80,7 @@ public class BooksController : ControllerBase
                 return Url.Link("GetAllBooks",
                     new
                     {
+                        Fields = queryOptions.Fields,
                         page = queryOptions.PageNumber + 1,
                         size = queryOptions.PageSize,
                         search = queryOptions.SearchTerm,
@@ -91,6 +92,7 @@ public class BooksController : ControllerBase
                 return Url.Link("GetAllBooks",
                     new
                     {
+                        Fields = queryOptions.Fields,
                         page = queryOptions.PageNumber,
                         size = queryOptions.PageSize,
                         search = queryOptions.SearchTerm,

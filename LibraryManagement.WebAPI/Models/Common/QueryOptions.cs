@@ -25,5 +25,7 @@ public class QueryOptions
         set => _pageSize = (value > MaxPageSize) ? MaxPageSize : value;
 
     }
+    [FromQuery(Name ="fields")]
+    public string? Fields { get; set; }
 }
 
