@@ -56,6 +56,7 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<IBookCollectionService, BookCollectionService>();
             webApplication.Services.AddScoped<IUserMapper, UserMapper>();
             webApplication.Services.AddScoped<IBookMapper, BookMapper>();
+            webApplication.Services.AddScoped<IPropertyCheckerService, PropertyCheckerService>();
 
             // Add DbContext
             webApplication.Services.AddDbContext<LibraryDbContext>(options =>

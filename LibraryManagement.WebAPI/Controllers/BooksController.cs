@@ -3,11 +3,13 @@ using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
+using LibraryManagement.WebAPI.Models.Dtos.Common;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
@@ -23,22 +25,31 @@ public class BooksController : ControllerBase
     private readonly ILogger<BooksController> _logger;
     private readonly IBookService _bookService;
     private readonly IBookMapper _bookMapper;
+    private readonly IPropertyCheckerService propertyCheckerService;
+    private readonly ProblemDetailsFactory proplemDetailsFactory;
 
-    public BooksController(ILogger<BooksController> logger, IBookService bookService, IBookMapper bookMapper)
+    public BooksController(ILogger<BooksController> logger, IBookService bookService, IBookMapper bookMapper, IPropertyCheckerService propertyCheckerService, ProblemDetailsFactory proplemDetailsFactory)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _bookService = bookService ?? throw new ArgumentNullException(nameof(bookService));
         _bookMapper = bookMapper;
+        this.propertyCheckerService = propertyCheckerService;
+        this.proplemDetailsFactory = proplemDetailsFactory;
     }
 
     [HttpGet(Name ="GetAllBooks")]
     public async Task<IActionResult> ListAllBooks([FromQuery] QueryOptions queryOptions)
     {
         var books = await _bookService.ListAllBooksAsync(queryOptions);
-        //var paginationMetadata
-        var previousPageLink = books.HasPrevious ? GenerateBooksResourceUri(queryOptions, ResourceUriType.PreviousPage) : null;
-       // next page link
-        var nextPageLink = books.HasNext ? GenerateBooksResourceUri(queryOptions, ResourceUriType.NextPage) : null;
+
+        if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(queryOptions.Fields))
+        {
+            return BadRequest(proplemDetailsFactory.CreateProblemDetails(
+                HttpContext,
+                statusCode: 400,
+                title: "Bad request",
+                detail: $"The fields {queryOptions.Fields} are invalid."));
+        }
 
         // var paginationMetadata 
         var paginationMetadata = new
@@ -47,8 +58,6 @@ public class BooksController : ControllerBase
             pageSize = books.PageSize,
             currentPage = books.CurrentPage,
             totalPages = books.TotalPages,
-            previousPageLink,
-            nextPageLink
         };
 
         var bookWithPublisherDto = new List<BookWithPublisherDto>();
@@ -57,8 +66,25 @@ public class BooksController : ControllerBase
             bookWithPublisherDto.Add(_bookMapper.ToBookWithPublisherDto(book));
         }
         Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
-        return Ok(bookWithPublisherDto.ShapeFields(queryOptions.Fields));
 
+        //links 
+        var links = CreateLinksForBooks(queryOptions,books.HasPrevious,books.HasNext);
+        var shapedBooks = bookWithPublisherDto.ShapeFields(queryOptions.Fields);
+        var shapedBooksWithLinks =  shapedBooks.Select(book =>
+        {
+            var bookAsDictionary = book as IDictionary<string, object>;
+            var bookLinks = CreateLinksForBook((Guid)bookAsDictionary["Id"], queryOptions.Fields);
+            bookAsDictionary.Add("links", bookLinks);
+            return bookAsDictionary;
+
+        });
+
+        var result = new
+        {
+            value = shapedBooksWithLinks,
+            links
+        };
+        return Ok(result);
     }
     private string? GenerateBooksResourceUri(QueryOptions queryOptions, ResourceUriType type)
     {
@@ -88,6 +114,7 @@ public class BooksController : ControllerBase
                         sort = queryOptions.OrderBy,
                         desc = queryOptions.IsDescending
                     });
+            case ResourceUriType.Current:
             default:
                 return Url.Link("GetAllBooks",
                     new
@@ -103,8 +130,8 @@ public class BooksController : ControllerBase
         }
     }
 
-    [HttpGet("{id}",Name = "GetBookById")]
-    public async Task<IActionResult> GetBookById(Guid id,[FromQuery] bool includePublisher = false)
+    [HttpGet("{id}",Name = "GetBook")]
+    public async Task<IActionResult> GetBookById(Guid id, string? fields,[FromQuery] bool includePublisher = false)
     {
         var book = await _bookService.GetByIdAsync(id, includePublisher);
         if (book is null)
@@ -118,10 +145,58 @@ public class BooksController : ControllerBase
             var bookDto =_bookMapper.ToBookWithPublisherDto(book);
             return Ok(bookDto);
         }
-        var bookWithPublisherDto = _bookMapper.ToBookWithoutPublisherDto( book);
-        return Ok(bookWithPublisherDto);
+
+        if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(fields))
+        {
+            return BadRequest(proplemDetailsFactory.CreateProblemDetails(
+                HttpContext,
+                statusCode: 400,
+                title: "Bad request",
+                detail: $"The fields {fields} are invalid."));
+        }
+        var links =  CreateLinksForBook(id, fields);
+        var bookDict = _bookMapper.ToBookWithoutPublisherDto(book).ShapeField(fields) as IDictionary<string, object>;
+        bookDict.Add("links", links);
+        return Ok(bookDict);
     }
-    [HttpPost]
+
+    private IEnumerable<LinkDto> CreateLinksForBook(Guid id, string? fields)
+    {
+        var links = new List<LinkDto>();
+        if (string.IsNullOrWhiteSpace(fields))
+        {
+            links.Add(new LinkDto(Url.Link(ApiRoutes.Books.GetBook, new { id }), "self", "GET"));
+        }
+        else
+        {
+            links.Add(new LinkDto(Url.Link(ApiRoutes.Books.GetBook, new { id, fields }), "self", "GET"));
+        }
+        links.Add(new LinkDto(Url.Link(ApiRoutes.Books.DeleteBook, new { id }), "delete_book", "DELETE"));
+        links.Add(new LinkDto(Url.Link(ApiRoutes.Books.UpdateBook, new { id }), "update_book", "PUT"));
+        links.Add(new LinkDto(Url.Link(ApiRoutes.Books.PartiallyUpdateBook, new { id }), "partially_update_book", "PATCH"));
+        return links;
+    }
+    private IEnumerable<LinkDto> CreateLinksForBooks(QueryOptions queryOptions, bool hasPrevious, bool hasNext)
+    {
+        var links = new List<LinkDto>();
+        //self link
+        links.Add(
+            new LinkDto(GenerateBooksResourceUri(queryOptions, ResourceUriType.Current), "self", "GET")
+        );
+        //next page link
+        if (hasNext)
+        {
+            links.Add(new LinkDto(GenerateBooksResourceUri(queryOptions, ResourceUriType.NextPage), "nextPage", "GET"));
+        }
+        //previous page link
+        if (hasPrevious)
+        {
+            links.Add(new LinkDto(GenerateBooksResourceUri(queryOptions, ResourceUriType.PreviousPage), "previousPage", "GET"));
+        }
+        return links;
+    }
+
+    [HttpPost(Name ="CreateBook")]
     [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> CreateBook([FromBody] BookCreateDto bookCreateDto)
     {
@@ -136,11 +211,15 @@ public class BooksController : ControllerBase
             return UnprocessableEntity(ModelState);
         }
         var createdBook = await _bookService.CreateBookAsync(bookCreateDto);
-        var bookReadDto = _bookMapper.ToBookReadDto(createdBook);
-        return CreatedAtRoute("GetBookById", new { id = bookReadDto.Id,includePublisher=false }, bookReadDto);
+
+        var links = CreateLinksForBook(createdBook.Id, null);
+
+        var bookToReturn = _bookMapper.ToBookReadDto(createdBook).ShapeField(null) as IDictionary<string, object?>;
+        bookToReturn.Add("links", links);
+        return CreatedAtRoute("GetBook", new { id = bookToReturn["Id"], includePublisher=false }, bookToReturn);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{id}",Name ="DeleteBook")]
     [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult>  DeleteBookById (Guid id)
     {
@@ -158,7 +237,7 @@ public class BooksController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id}",Name ="UpdateBook")]
     [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> UpdateBook(Guid id, [FromBody] BookUpdateDto bookUpdateDto)
     {
@@ -184,7 +263,7 @@ public class BooksController : ControllerBase
     }
 
 
-    [HttpPatch("{id}")]
+    [HttpPatch("{id}",Name = "PartiallyUpdateBook")]
    // [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> PartiallyUpdateBookAsync(Guid id, [FromBody] JsonPatchDocument<BookUpdateDto> patchDocument)
     {
@@ -232,7 +311,7 @@ public class BooksController : ControllerBase
         Response.Headers.Add("Allow", "GET,PATCH,PUT");
         return Ok();
     }
-    // will use this method to return 422 UnprocessableEntity response
+    // will use this method to return 422 Unpossessable Entity response
     public override ActionResult ValidationProblem(
         ModelStateDictionary modelStateDictionary)
     {
