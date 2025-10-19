@@ -5,11 +5,11 @@ using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace LibraryManagement.WebAPI.Extensions
 {
@@ -49,7 +49,18 @@ namespace LibraryManagement.WebAPI.Extensions
                         };
                     };
                 });
-
+            //configure support for vendor specific media types
+            webApplication.Services.Configure<MvcOptions>(config =>
+            {
+                var newtonsoftJsonOutputFormatter = config.OutputFormatters
+                    .OfType<Microsoft.AspNetCore.Mvc.Formatters.NewtonsoftJsonOutputFormatter>()?
+                    .FirstOrDefault();
+                if (newtonsoftJsonOutputFormatter != null)
+                    {
+                    newtonsoftJsonOutputFormatter.SupportedMediaTypes
+                        .Add("application/vnd.hamid.hateoas+json");
+                }
+            });
             // Add services
             webApplication.Services.AddScoped<IBookService, BookService>();
             webApplication.Services.AddScoped<IUserService, UserService>();
