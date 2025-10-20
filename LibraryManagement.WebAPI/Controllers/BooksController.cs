@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.ActionConstraints;
 using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
@@ -12,7 +13,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
-using Microsoft.Net.Http.Headers;
 using System.Text.Json;
 
 namespace LibraryManagement.WebAPI.Controllers;
@@ -37,24 +37,14 @@ public class BooksController : ControllerBase
         this.propertyCheckerService = propertyCheckerService;
         this.proplemDetailsFactory = proplemDetailsFactory;
     }
-    [Produces("application/json","application/xml",
-          "application/vnd.hamid.hateoas+json")]
-    [HttpGet(Name ="GetAllBooks")]
-    public async Task<IActionResult> ListAllBooks([FromHeader(Name ="accept")] string? mediaType ,[FromQuery] QueryOptions queryOptions)
-    {
-        //check media type validation
-        if (!MediaTypeHeaderValue.TryParse(mediaType, out var parsedMediaType))
-        {
-           return BadRequest(
-                proplemDetailsFactory.CreateProblemDetails(
-                    HttpContext,
-                    statusCode: 400,
-                    title: "Bad request",
-                    detail: $"The media type {mediaType} is invalid."
-                    )
-            );
-        }
 
+    [Produces("application/vnd.hamid.hateoas+json")]
+    [RequestHeaderMatchesMediaTypeAttribute("Accept",
+          "application/vnd.hamid.hateoas+json")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpGet(Name ="GetAllBooks")]
+    public async Task<IActionResult> ListAllBooksWithLinks([FromQuery] QueryOptions queryOptions)
+    {
         var books = await _bookService.ListAllBooksAsync(queryOptions);
 
         if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(queryOptions.Fields))
@@ -82,8 +72,6 @@ public class BooksController : ControllerBase
         }
         Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
 
-        if (parsedMediaType.MediaType == "application/vnd.hamid.hateoas+json")
-        {
             //links 
             var links = CreateLinksForBooks(queryOptions, books.HasPrevious, books.HasNext);
             var shapedBooks = bookWithPublisherDto.ShapeFields(queryOptions.Fields);
@@ -102,12 +90,44 @@ public class BooksController : ControllerBase
                 links
             };
             return Ok(result);
-        }
-        else
+    }
+
+    [Produces("application/json", "application/xml")]
+    [RequestHeaderMatchesMediaTypeAttribute("Accept",
+         "application/json", "application/xml")]
+    [HttpGet(Name = "GetAllBooks")]
+    public async Task<IActionResult> ListAllBooks([FromQuery] QueryOptions queryOptions)
+    {
+        var books = await _bookService.ListAllBooksAsync(queryOptions);
+
+        if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(queryOptions.Fields))
         {
-            var shapedBooks = bookWithPublisherDto.ShapeFields(queryOptions.Fields);
-            return Ok(shapedBooks);
+            return BadRequest(proplemDetailsFactory.CreateProblemDetails(
+                HttpContext,
+                statusCode: 400,
+                title: "Bad request",
+                detail: $"The fields {queryOptions.Fields} are invalid."));
         }
+
+        // var paginationMetadata 
+        var paginationMetadata = new
+        {
+            totalCount = books.TotalRecords,
+            pageSize = books.PageSize,
+            currentPage = books.CurrentPage,
+            totalPages = books.TotalPages,
+        };
+
+        var bookWithPublisherDto = new List<BookWithPublisherDto>();
+        foreach (var book in books)
+        {
+            bookWithPublisherDto.Add(_bookMapper.ToBookWithPublisherDto(book));
+        }
+
+        Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
+        var shapedBooks = bookWithPublisherDto.ShapeFields(queryOptions.Fields);
+        return Ok(shapedBooks);
+
     }
     private string? GenerateBooksResourceUri(QueryOptions queryOptions, ResourceUriType type)
     {
@@ -152,24 +172,14 @@ public class BooksController : ControllerBase
                     });
         }
     }
-    [Produces("application/json", "application/xml",
-           "application/vnd.hamid.hateoas+json")]
-    [HttpGet("{id}",Name = "GetBook")]
-    public async Task<IActionResult> GetBookById(Guid id, string? fields, [FromHeader(Name = "accept")] string? mediaType, [FromQuery] bool includePublisher = false)
-    {
-        //check media type validation
-        if (!MediaTypeHeaderValue.TryParse(mediaType, out var parsedMediaType))
-        {
-           return BadRequest(
-                proplemDetailsFactory.CreateProblemDetails(
-                    HttpContext,
-                    statusCode: 400,
-                    title: "Bad request",
-                    detail: $"The media type {mediaType} is invalid."
-                    )
-            );
-        }
 
+    [Produces("application/vnd.hamid.hateoas+json")]
+    [RequestHeaderMatchesMediaTypeAttribute("Accept",
+           "application/vnd.hamid.hateoas+json")]
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [HttpGet("{id}",Name ="GetBook")]
+    public async Task<IActionResult> GetBookByIdWithLinks(Guid id, string? fields, [FromQuery] bool includePublisher = false)
+    {
         var book = await _bookService.GetByIdAsync(id, includePublisher);
         if (book is null)
         {
@@ -191,18 +201,44 @@ public class BooksController : ControllerBase
                 title: "Bad request",
                 detail: $"The fields {fields} are invalid."));
         }
-      if(parsedMediaType.MediaType == "application/vnd.hamid.hateoas+json")
-        {
+   
             var links = CreateLinksForBook(id, fields);
             var bookDict = _bookMapper.ToBookWithoutPublisherDto(book).ShapeField(fields) as IDictionary<string, object>;
             bookDict.Add("links", links);
-            return Ok(bookDict);
-        }
-        else
+            return Ok(bookDict);     
+    }
+
+    [Produces("application/json", "application/xml")]
+    [RequestHeaderMatchesMediaTypeAttribute("Accept",
+          "application/json","application/xml")]
+    [HttpGet("{id}", Name = "GetBook")]
+    public async Task<IActionResult> GetBookById(Guid id, string? fields, [FromQuery] bool includePublisher = false)
+    {
+        var book = await _bookService.GetByIdAsync(id, includePublisher);
+        if (book is null)
         {
-            var bookDto = _bookMapper.ToBookWithoutPublisherDto(book).ShapeField(fields);
+            _logger.LogDebug("Book with id: {id} was not found", id);
+            return NotFound();
+        }
+
+        if (includePublisher)
+        {
+            var bookDto = _bookMapper.ToBookWithPublisherDto(book);
             return Ok(bookDto);
         }
+
+        if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(fields))
+        {
+            return BadRequest(proplemDetailsFactory.CreateProblemDetails(
+                HttpContext,
+                statusCode: 400,
+                title: "Bad request",
+                detail: $"The fields {fields} are invalid."));
+        }
+    
+            var bookReturnDto = _bookMapper.ToBookWithoutPublisherDto(book).ShapeField(fields);
+            return Ok(bookReturnDto);
+        
     }
 
     private IEnumerable<LinkDto> CreateLinksForBook(Guid id, string? fields)
