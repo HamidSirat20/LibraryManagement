@@ -26,6 +26,6 @@ public class QueryOptions
 
     }
     [FromQuery(Name ="fields")]
-    public string? Fields { get; set; }
+    public string? Fields { get; set; } 
 }
 

@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>d9c96972-6d9a-4bea-9889-fa9c8118184c</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +34,10 @@
 
   <ItemGroup>
     <None Include="F:\Integfiy Folder\Back-End\Practice Projects\LibraryManagement\LibraryManagement.WebAPI\.editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="LogFile\" />
   </ItemGroup>
 
 </Project>

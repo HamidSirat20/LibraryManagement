@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
 
 namespace LibraryManagement.WebAPI.Extensions
 {
@@ -22,7 +21,12 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddControllers( configure =>
             {
                 configure.ReturnHttpNotAcceptable = true;
-                
+                configure.CacheProfiles.Add("120SecondsCacheProfile",
+                    new CacheProfile()
+                    {
+                        Duration = 120
+                    });
+
             })
                 .AddNewtonsoftJson(options =>
                 {
@@ -68,6 +72,7 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<IUserMapper, UserMapper>();
             webApplication.Services.AddScoped<IBookMapper, BookMapper>();
             webApplication.Services.AddScoped<IPropertyCheckerService, PropertyCheckerService>();
+            webApplication.Services.AddScoped<IPasswordService, PasswordService>();
 
             // Add DbContext
             webApplication.Services.AddDbContext<LibraryDbContext>(options =>
@@ -81,6 +86,8 @@ namespace LibraryManagement.WebAPI.Extensions
                         npgsqlOptions.MapEnum<LoanStatus>("loan_status");
                     });
             });
+            webApplication.Services.AddResponseCaching();
+
             //add routing
             webApplication.Services.AddRouting(options =>
             {
@@ -123,8 +130,7 @@ namespace LibraryManagement.WebAPI.Extensions
                 options.DefaultApiVersion = new ApiVersion(1, 0);
                 options.ReportApiVersions = true;
             }).AddMvc();
-
-            return  webApplication.Build();
+            return webApplication.Build();
         }
 
         public static WebApplication ConfigPipeline(this WebApplication app) 
@@ -141,12 +147,11 @@ namespace LibraryManagement.WebAPI.Extensions
                 app.UseExceptionHandler("/error");
                 app.UseHsts();
             }
-
-                app.UseHttpsRedirection();
+            app.UseResponseCaching();
+            app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
 
             return app;

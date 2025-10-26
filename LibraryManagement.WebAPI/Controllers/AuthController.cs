@@ -10,19 +10,21 @@ using System.Text;
 
 namespace LibraryManagement.WebAPI.Controllers
 {
-    [Route("api/v{version.apiVersion}/[controller]")]
+    [Route("api/v{version:ApiVersion}/[controller]")]
     [ApiVersion("1.0")]
     [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IUserService userService, IConfiguration configuration
+        public AuthController(IUserService userService, IConfiguration configuration,ILogger<AuthController> logger
             )
         {
             _userService = userService ?? throw new ArgumentNullException(nameof(userService));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
         [HttpPost()]
         public async Task<ActionResult<string>> Authenticate(LoginDto loginDto)
@@ -32,7 +34,7 @@ namespace LibraryManagement.WebAPI.Controllers
             {
                 return Unauthorized();
             }
-            Console.WriteLine($"User ID: {loginUser.Id}, Type: {loginUser.Id.GetType()}");
+            _logger.LogInformation($"User ID: {loginUser.Id}, Type: {loginUser.Id.GetType()}");
 
             //create a token
             var securityKey =new SymmetricSecurityKey(Encoding.Unicode.GetBytes(_configuration["Authentication:secretKey"]));
@@ -64,7 +66,10 @@ namespace LibraryManagement.WebAPI.Controllers
         {
             var user = await _userService.GetByEmailAsync(loginDto.Email);
             if (user == null)
+            {
+                _logger.LogWarning("Authentication failed for email: {Email}. User not found.", loginDto.Email);
                 return null;
+            }
             return new UserValidateDto
                 {
                     Id = user.Id,

@@ -13,10 +13,12 @@ namespace LibraryManagement.WebAPI.Controllers
     public class BookCollectionsController : ControllerBase
     {
         private readonly IBookCollectionService _bookCollectionService;
+        private readonly ILogger<BookCollectionsController> _logger;
 
-        public BookCollectionsController(IBookCollectionService bookCollectionService)
+        public BookCollectionsController(IBookCollectionService bookCollectionService,ILogger<BookCollectionsController> logger)
         {
-            _bookCollectionService = bookCollectionService;
+            _bookCollectionService = bookCollectionService ?? throw new ArgumentNullException(nameof(bookCollectionService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
 
@@ -25,14 +27,28 @@ namespace LibraryManagement.WebAPI.Controllers
         {
             if (bookIds == null || !bookIds.Any())
             {
+                _logger.LogWarning("GetBookCollectionAsync called with null or empty bookIds. Count: {BookIdCount}", bookIds?.Count() ?? 0);
                 throw new ArgumentNullException(nameof(bookIds));
             }
+            try
+            {
+     
             var books = await _bookCollectionService.GetBookCollectionAsync(bookIds);
             if(books.Count() != bookIds.Count())
             {
                 return NotFound();
             }
-            return Ok(books);
+                return Ok(books);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Error retrieving book collection for IDs: {BookIds}. " +
+                    "IDs count: {BookIdCount}",
+                    bookIds, bookIds.Count());
+
+                return StatusCode(500, "An error occurred while retrieving books");
+            }
         }
 
         [HttpPost]

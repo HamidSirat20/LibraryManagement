@@ -19,6 +19,7 @@ namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
 //[Authorize]
+[ResponseCache(CacheProfileName = "120SecondsCacheProfile")]
 [Route("api/v{version:ApiVersion}/[controller]")]
 [ApiVersion("1.0")]
 public class BooksController : ControllerBase
@@ -26,16 +27,16 @@ public class BooksController : ControllerBase
     private readonly ILogger<BooksController> _logger;
     private readonly IBookService _bookService;
     private readonly IBookMapper _bookMapper;
-    private readonly IPropertyCheckerService propertyCheckerService;
-    private readonly ProblemDetailsFactory proplemDetailsFactory;
+    private readonly IPropertyCheckerService _propertyCheckerService;
+    private readonly ProblemDetailsFactory _problemDetailsFactory;
 
-    public BooksController(ILogger<BooksController> logger, IBookService bookService, IBookMapper bookMapper, IPropertyCheckerService propertyCheckerService, ProblemDetailsFactory proplemDetailsFactory)
+    public BooksController(ILogger<BooksController> logger, IBookService bookService, IBookMapper bookMapper, IPropertyCheckerService propertyCheckerService, ProblemDetailsFactory problemDetailsFactory)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _bookService = bookService ?? throw new ArgumentNullException(nameof(bookService));
-        _bookMapper = bookMapper;
-        this.propertyCheckerService = propertyCheckerService;
-        this.proplemDetailsFactory = proplemDetailsFactory;
+        _bookMapper = bookMapper ?? throw new ArgumentNullException(nameof(bookMapper));
+        _propertyCheckerService = propertyCheckerService ?? throw new ArgumentNullException(nameof(propertyCheckerService));
+        _problemDetailsFactory = problemDetailsFactory ?? throw new ArgumentNullException(nameof(problemDetailsFactory));
     }
 
     [Produces("application/vnd.hamid.hateoas+json")]
@@ -47,9 +48,9 @@ public class BooksController : ControllerBase
     {
         var books = await _bookService.ListAllBooksAsync(queryOptions);
 
-        if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(queryOptions.Fields))
+        if (!_propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(queryOptions.Fields))
         {
-            return BadRequest(proplemDetailsFactory.CreateProblemDetails(
+            return BadRequest(_problemDetailsFactory.CreateProblemDetails(
                 HttpContext,
                 statusCode: 400,
                 title: "Bad request",
@@ -91,7 +92,6 @@ public class BooksController : ControllerBase
             };
             return Ok(result);
     }
-
     [Produces("application/json", "application/xml")]
     [RequestHeaderMatchesMediaTypeAttribute("Accept",
          "application/json", "application/xml")]
@@ -99,10 +99,9 @@ public class BooksController : ControllerBase
     public async Task<IActionResult> ListAllBooks([FromQuery] QueryOptions queryOptions)
     {
         var books = await _bookService.ListAllBooksAsync(queryOptions);
-
-        if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(queryOptions.Fields))
+        if (!_propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(queryOptions.Fields))
         {
-            return BadRequest(proplemDetailsFactory.CreateProblemDetails(
+            return BadRequest(_problemDetailsFactory.CreateProblemDetails(
                 HttpContext,
                 statusCode: 400,
                 title: "Bad request",
@@ -193,9 +192,9 @@ public class BooksController : ControllerBase
             return Ok(bookDto);
         }
 
-        if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(fields))
+        if (!_propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(fields))
         {
-            return BadRequest(proplemDetailsFactory.CreateProblemDetails(
+            return BadRequest(_problemDetailsFactory.CreateProblemDetails(
                 HttpContext,
                 statusCode: 400,
                 title: "Bad request",
@@ -227,9 +226,9 @@ public class BooksController : ControllerBase
             return Ok(bookDto);
         }
 
-        if (!propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(fields))
+        if (!_propertyCheckerService.TypeHasProperties<BookWithPublisherDto>(fields))
         {
-            return BadRequest(proplemDetailsFactory.CreateProblemDetails(
+            return BadRequest(_problemDetailsFactory.CreateProblemDetails(
                 HttpContext,
                 statusCode: 400,
                 title: "Bad request",

@@ -7,6 +7,7 @@ using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace LibraryManagement.WebAPI.Services.Implementations;
 
@@ -26,7 +27,6 @@ public class BookService : IBookService
         {
             throw new ArgumentNullException(nameof(bookCreateDto));
         }
-
         var book = new Book()
         {
             Title = bookCreateDto.Title,
@@ -88,7 +88,6 @@ public class BookService : IBookService
         {
             throw new ArgumentNullException(nameof(queryOptions));
         }
-
         var query = _dbContext.Books
             .Include(a => a.BookAuthors)
             .ThenInclude(ba => ba.Author)
@@ -141,7 +140,6 @@ public class BookService : IBookService
 
 
         }
-
         //pagination 
         return await PaginatedResponse<Book>.CreateAsync(query, queryOptions.PageNumber, queryOptions.PageSize);
 

@@ -16,6 +16,6 @@ namespace LibraryManagement.WebAPI.Services.Interfaces
         Task<UserReadDto?> PromoteToAdminAsync(Guid memberId);
         Task<IEnumerable<User>> GetUsersWithActiveLoansAsync();
         Task<IEnumerable<User>> GetUsersWithOverdueLoansAsync();
-        Task<bool> ChangePassword (ChangePasswordDto changePasswordDto);
+        Task<bool> ChangePassword (Guid id, string newPassword);
     }
 }

@@ -11,20 +11,36 @@ namespace LibraryManagement.WebAPI.Services.Implementations
     {
         private readonly LibraryDbContext _dbContext;
         private readonly IUserMapper _userMapper;
+        private readonly IPasswordService _passwordService;
 
-        public UserService(LibraryDbContext libraryDbContext, IUserMapper userMapper)
+        public UserService(LibraryDbContext libraryDbContext, IUserMapper userMapper,IPasswordService passwordService)
         {
             _dbContext = libraryDbContext ?? throw new ArgumentNullException(nameof(libraryDbContext));
             _userMapper = userMapper;
+            _passwordService = passwordService ?? throw new ArgumentNullException(nameof(passwordService));
         }
-        public Task<bool> ChangePassword(ChangePasswordDto changePasswordDto)
+        public async Task<bool> ChangePassword(Guid id, string newPassword)
         {
-            throw new NotImplementedException();
+            var foundUser = await _dbContext.Users.FindAsync(id);
+            if (foundUser == null)
+            {
+                throw new Exception("User not found");
+            }
+            _passwordService.HashPassword(newPassword, out var hashedPassword, out var salt);
+            foundUser.Password = hashedPassword;
+            foundUser.Salt = salt;
+            return true;
         }
 
         public async Task<UserReadDto> CreateAdminAsync(UserCreateDto userCreateDto)
         {
             var user = _userMapper.ToEntity(userCreateDto);
+
+            //hash password
+            _passwordService.HashPassword(userCreateDto.Password, out var hashedPassword, out var salt);
+            user.Password = hashedPassword;
+            user.Salt = salt;
+
             user.Role = UserRole.Admin;
             await _dbContext.Users.AddAsync(user);
             _dbContext.SaveChanges();
@@ -34,7 +50,12 @@ namespace LibraryManagement.WebAPI.Services.Implementations
         public async Task<UserReadDto?> CreateUserAsync(UserCreateDto userCreateDto)
         {
             var user = _userMapper.ToEntity(userCreateDto);
+            //hash password
+            _passwordService.HashPassword(userCreateDto.Password, out var hashedPassword, out var salt);
+            user.Password = hashedPassword;
+            user.Salt = salt;
             user.Role = UserRole.User;
+
             await _dbContext.Users.AddAsync(user);
             _dbContext.SaveChanges();
             return _userMapper.ToReadDto(user);

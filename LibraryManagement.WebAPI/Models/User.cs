@@ -8,6 +8,8 @@ public class User: BaseEntityWithId
     public string Password { get; set; }
     public string Phone { get; set; }
     public string Address { get; set; }
+    public byte[] Salt { get; set; }
+
     public string AvatarUrl { get; set; } = "https://www.gravatar.com/avatar/";
     public UserRole Role { get; set; } = UserRole.User;
     public DateTime MembershipStartDate { get; set; }

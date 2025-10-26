@@ -25,6 +25,7 @@ public class RequestHeaderMatchesMediaTypeAttribute : Attribute, IActionConstrai
             throw new ArgumentException($"Invalid media type: {mediaType}", nameof(mediaType));
         }
 
+
         foreach (var otherMediaType in otherMediaTypes)
         {
             if (MediaTypeHeaderValue.TryParse(otherMediaType, out MediaTypeHeaderValue? parsedOtherMediaType))
