@@ -1,6 +1,8 @@
 ﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
+using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,10 +15,12 @@ namespace LibraryManagement.WebAPI.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IUserMapper _userMapper;
 
-    public UsersController( IUserService userService)
+    public UsersController( IUserService userService,IUserMapper userMapper)
     {
-        _userService = userService;
+        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        _userMapper = userMapper ?? throw new ArgumentNullException(nameof(userMapper));
     }
     [HttpGet]
     [HttpHead]
@@ -59,14 +63,16 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateOneUser([FromBody] UserCreateDto userCreateDto)
+    public async Task<IActionResult> CreateOneUser([FromForm] UserCreateDto userCreateDto)
     {
         if(userCreateDto == null)
         {
             return BadRequest("User data is null");
         }
+  
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
-        if(!ModelState.IsValid)
+
+        if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
@@ -74,14 +80,15 @@ public class UsersController : ControllerBase
         {
             return BadRequest("User is empty");
         }
+        var userReadDto = _userMapper.ToReadDto(createdUser);
         return CreatedAtRoute(
                 "GetOneUser",
-                 new { id = createdUser.Id },
-                 createdUser);
+                 new { id = userReadDto.Id },
+                 userReadDto);
     }
     [HttpPost("admin")]
     [Authorize(Policy = "AdminCanAccess")]
-    public async Task<IActionResult> CreateAdmin([FromBody] UserCreateDto userCreateDto)
+    public async Task<IActionResult> CreateAdmin([FromForm] UserCreateDto userCreateDto)
     {
         if (userCreateDto == null)
         {
@@ -96,7 +103,8 @@ public class UsersController : ControllerBase
         {
             return BadRequest("User is empty");
         }
-        return CreatedAtRoute("GetOneUser", new { id = createdUser.Id }, createdUser);
+        var userReadDto = _userMapper.ToReadDto(createdUser);
+        return CreatedAtRoute("GetOneUser", new { id = createdUser.Id }, userReadDto);
     }
     [HttpGet("by-email/{email}")]
     [Authorize(Policy = "AdminCanAccess")]

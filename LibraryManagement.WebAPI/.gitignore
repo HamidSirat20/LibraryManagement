@@ -1,1 +1,10 @@
-﻿
+﻿appsettings.json
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+
+# User secrets or private keys
+secrets.json
+*.pfx
+*.cer
+*.key

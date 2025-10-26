@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
@@ -65,6 +66,9 @@ namespace LibraryManagement.WebAPI.Extensions
                         .Add("application/vnd.hamid.hateoas+json");
                 }
             });
+
+            //configure cloudinary settings
+            webApplication.Services.Configure<CloudinarySettings>(webApplication.Configuration.GetSection("CloudinarySettings"));
             // Add services
             webApplication.Services.AddScoped<IBookService, BookService>();
             webApplication.Services.AddScoped<IUserService, UserService>();
@@ -73,6 +77,7 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<IBookMapper, BookMapper>();
             webApplication.Services.AddScoped<IPropertyCheckerService, PropertyCheckerService>();
             webApplication.Services.AddScoped<IPasswordService, PasswordService>();
+            webApplication.Services.AddScoped<IImageService, ImageService>();
 
             // Add DbContext
             webApplication.Services.AddDbContext<LibraryDbContext>(options =>

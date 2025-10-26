@@ -25,9 +25,7 @@ namespace LibraryManagement.WebAPI.Models.Dtos.Common
         [Required(ErrorMessage = "Address is required.")]
         [MaxLength(200, ErrorMessage = "Address cannot exceed 200 characters.")]
         public string Address { get; set; } = string.Empty;
+        public string? PublicId { get; set; }
 
-        [Url(ErrorMessage = "Avatar URL must be a valid URL.")]
-        [MaxLength(500, ErrorMessage = "Avatar URL cannot exceed 500 characters.")]
-        public string AvatarUrl { get; set; } = "https://www.gravatar.com/avatar/";
     }
 }

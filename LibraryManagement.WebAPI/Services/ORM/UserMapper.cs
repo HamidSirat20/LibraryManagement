@@ -20,6 +20,7 @@ public  class UserMapper : IUserMapper
             Address = user.Address,
             AvatarUrl = user.AvatarUrl,
             Role = user.Role,
+            PublicId = user.PublicId,
             MembershipStartDate = user.MembershipStartDate,
             MembershipEndDate = user.MembershipEndDate
         };
@@ -34,13 +35,13 @@ public  class UserMapper : IUserMapper
             lName: userCreateDto.LastName,
             email: userCreateDto.Email,
             phone: userCreateDto.Phone,
-            address: userCreateDto.Address,
+            address: userCreateDto.Address,     
             membershipStartDate: DateTime.UtcNow,
             membershipEndDate: DateTime.UtcNow.AddYears(1)
         )
         {
             Password = userCreateDto.Password,
-            AvatarUrl = userCreateDto.AvatarUrl
+            PublicId = userCreateDto.PublicId
         };
     }
 
@@ -55,7 +56,7 @@ public  class UserMapper : IUserMapper
             Email = user.Email,
             Phone = user.Phone,
             Address = user.Address,
-            AvatarUrl = user.AvatarUrl
+            PublicId = user.PublicId
         };
     }
 
@@ -70,8 +71,8 @@ public  class UserMapper : IUserMapper
             Email = user.Email,
             Phone = user.Phone,
             Address = user.Address,
-            AvatarUrl = user.AvatarUrl,
-            Password = string.Empty
+            Password = string.Empty,
+            PublicId = user.PublicId
         };
     }
 
@@ -84,7 +85,7 @@ public  class UserMapper : IUserMapper
         user.Email = userUpdateDto.Email ?? user.Email;
         user.Phone = userUpdateDto.Phone ?? user.Phone;
         user.Address = userUpdateDto.Address ?? user.Address;
-        user.AvatarUrl = userUpdateDto.AvatarUrl ?? user.AvatarUrl;
+        user.PublicId = userUpdateDto.PublicId ?? user.PublicId;
 
         return user;
     }

@@ -18,7 +18,6 @@ namespace LibraryManagement.WebAPI.Data
         public DbSet<BookAuthor> BookAuthors { get; set; } = null!;
         public DbSet<LateReturnOrLostFee> LateReturnOrLostFees { get; set; } = null!;
 
-
         public LibraryDbContext(DbContextOptions<LibraryDbContext> options, IConfiguration config) : base(options)
         {
 

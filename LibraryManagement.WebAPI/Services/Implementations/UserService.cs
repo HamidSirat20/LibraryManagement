@@ -12,12 +12,14 @@ namespace LibraryManagement.WebAPI.Services.Implementations
         private readonly LibraryDbContext _dbContext;
         private readonly IUserMapper _userMapper;
         private readonly IPasswordService _passwordService;
+        private readonly IImageService _imageService;
 
-        public UserService(LibraryDbContext libraryDbContext, IUserMapper userMapper,IPasswordService passwordService)
+        public UserService(LibraryDbContext libraryDbContext, IUserMapper userMapper,IPasswordService passwordService,IImageService imageService)
         {
             _dbContext = libraryDbContext ?? throw new ArgumentNullException(nameof(libraryDbContext));
             _userMapper = userMapper;
             _passwordService = passwordService ?? throw new ArgumentNullException(nameof(passwordService));
+            _imageService = imageService ?? throw new ArgumentNullException(nameof(imageService));
         }
         public async Task<bool> ChangePassword(Guid id, string newPassword)
         {
@@ -32,10 +34,19 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             return true;
         }
 
-        public async Task<UserReadDto> CreateAdminAsync(UserCreateDto userCreateDto)
+        public async Task<User> CreateAdminAsync(UserCreateDto userCreateDto)
         {
             var user = _userMapper.ToEntity(userCreateDto);
-
+            if (userCreateDto.File != null)
+            {
+                var uploadResult = await _imageService.AddImageAsync(userCreateDto.File);
+                if (uploadResult.Error != null)
+                {
+                    throw new Exception($"Image upload failed: {uploadResult.Error.Message}");
+                }
+                user.AvatarUrl = uploadResult.SecureUrl.ToString();
+                user.PublicId = uploadResult.PublicId;
+            }
             //hash password
             _passwordService.HashPassword(userCreateDto.Password, out var hashedPassword, out var salt);
             user.Password = hashedPassword;
@@ -44,12 +55,22 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             user.Role = UserRole.Admin;
             await _dbContext.Users.AddAsync(user);
             _dbContext.SaveChanges();
-            return _userMapper.ToReadDto(user);
+            return user;
         }
 
-        public async Task<UserReadDto?> CreateUserAsync(UserCreateDto userCreateDto)
+        public async Task<User?> CreateUserAsync(UserCreateDto userCreateDto)
         {
             var user = _userMapper.ToEntity(userCreateDto);
+            if (userCreateDto.File != null)
+            {
+                var uploadResult = await _imageService.AddImageAsync(userCreateDto.File);
+                if (uploadResult.Error != null)
+                {
+                    throw new Exception($"Image upload failed: {uploadResult.Error.Message}");
+                }
+                user.AvatarUrl = uploadResult.SecureUrl.ToString();
+                user.PublicId = uploadResult.PublicId;
+            }
             //hash password
             _passwordService.HashPassword(userCreateDto.Password, out var hashedPassword, out var salt);
             user.Password = hashedPassword;
@@ -58,7 +79,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
 
             await _dbContext.Users.AddAsync(user);
             _dbContext.SaveChanges();
-            return _userMapper.ToReadDto(user);
+            return user;
         }
 
         public async Task DeleteByIdAsync(Guid id)
@@ -77,17 +98,17 @@ namespace LibraryManagement.WebAPI.Services.Implementations
            return await _dbContext.Users.AnyAsync(x => x.Id == id);
         }
 
-        public async Task<UserReadDto?> GetByEmailAsync(string email)
+        public async Task<User?> GetByEmailAsync(string email)
         {
             var user  = await _dbContext.Users.FirstOrDefaultAsync(x => x.Email == email);
             if (user == null)
             {
                 return null;
             }
-            return _userMapper.ToReadDto(user);
+            return user;
         }
 
-        public async Task<UserReadDto?> GetByIdAsync(Guid id, bool includeLoansAndReservations = false)
+        public async Task<User?> GetByIdAsync(Guid id, bool includeLoansAndReservations = false)
         {
 
             if (id == Guid.Empty)
@@ -111,7 +132,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
                     .AsNoTracking() 
                     .FirstOrDefaultAsync(x => x.Id == id);
 
-                return _userMapper.ToReadDto(user);
+                return user;
             }
             catch (Exception)
             {
@@ -137,18 +158,14 @@ namespace LibraryManagement.WebAPI.Services.Implementations
                 .ToListAsync();
             return users;
         }
-        public async Task<IEnumerable<UserReadDto>> ListAllUsersAsync()
+        public async Task<IEnumerable<User>> ListAllUsersAsync()
         {
            var users = await _dbContext.Users.ToListAsync();
-            var userReadDto = new List<UserReadDto>();
-            foreach (var user in users)
-            {
-                userReadDto.Add(_userMapper.ToReadDto(user));
-            }
-            return userReadDto;
+            
+            return users;
         }
 
-        public async Task<UserReadDto?> PromoteToAdminAsync(Guid memberId)
+        public async Task<User?> PromoteToAdminAsync(Guid memberId)
         {
             var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == memberId);
             if(user == null)
@@ -157,10 +174,10 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             }
             user.Role = UserRole.Admin;
             await _dbContext.SaveChangesAsync();
-            return _userMapper.ToReadDto(user);
+            return user;
         }
 
-        public async Task<UserReadDto> UpdateUserAsync(Guid id, UserUpdateDto userUpdateDto)
+        public async Task<User> UpdateUserAsync(Guid id, UserUpdateDto userUpdateDto)
         {
             var user =await _dbContext.Users.FirstOrDefaultAsync(x => x.Id ==id);
             if(user == null)
@@ -169,7 +186,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             }
              _userMapper.UpdateFromDto(user, userUpdateDto);
             await _dbContext.SaveChangesAsync();
-            return _userMapper.ToReadDto(user);
+            return user;
         }
     }
 }
