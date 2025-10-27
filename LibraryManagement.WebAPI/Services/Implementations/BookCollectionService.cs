@@ -50,7 +50,6 @@ namespace LibraryManagement.WebAPI.Services.Implementations
                 {
                     Title = bookCreateDto.Title,
                     Description = bookCreateDto.Description,
-                    CoverImageUrl = bookCreateDto.CoverImageUrl,
                     Genre = bookCreateDto.Genre,
                     PublishedDate = bookCreateDto.PublishedDate,
                     Pages = bookCreateDto.Pages,

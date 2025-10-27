@@ -18,9 +18,7 @@ namespace LibraryManagement.WebAPI.Models.Dtos
 
     public class UserUpdateDto : UserForManipulationDto
     {
-
-        [Required(ErrorMessage = "Upload avatar image for profile.")]
-        public IFormFile File { get; set; } = null!;
+        public IFormFile? File { get; set; } 
     }
 
     public class UserReadDto

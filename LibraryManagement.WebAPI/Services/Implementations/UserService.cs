@@ -90,6 +90,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations
                 throw new ArgumentNullException(nameof(user), "User not found");
             }
             _dbContext.Users.Remove(user);
+            await _imageService.DeleteImageAsync(user.PublicId!);
             await _dbContext.SaveChangesAsync();
         }
 
@@ -184,7 +185,21 @@ namespace LibraryManagement.WebAPI.Services.Implementations
             {
                 throw new ArgumentNullException(nameof(user), "User not found");
             }
-             _userMapper.UpdateFromDto(user, userUpdateDto);
+            if (userUpdateDto.File != null)
+            {
+                if (!string.IsNullOrEmpty(user.PublicId))
+                {
+                    await _imageService.DeleteImageAsync(user.PublicId);
+                }
+                var uploadResult = await _imageService.AddImageAsync(userUpdateDto.File);
+                if (uploadResult.Error != null)
+                {
+                    throw new Exception($"Image upload failed: {uploadResult.Error.Message}");
+                }
+                user.AvatarUrl = uploadResult.SecureUrl.ToString();
+                user.PublicId = uploadResult.PublicId;
+            }
+                _userMapper.UpdateFromDto(user, userUpdateDto);
             await _dbContext.SaveChangesAsync();
             return user;
         }

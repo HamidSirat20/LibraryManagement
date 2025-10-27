@@ -277,8 +277,8 @@ public class BooksController : ControllerBase
     }
 
     [HttpPost(Name ="CreateBook")]
-    [Authorize(Policy = "AdminCanAccess")]
-    public async Task<IActionResult> CreateBook([FromBody] BookCreateDto bookCreateDto)
+   /// [Authorize(Policy = "AdminCanAccess")]
+    public async Task<IActionResult> CreateBook([FromForm] BookCreateDto bookCreateDto)
     {
         if (bookCreateDto == null)
         {

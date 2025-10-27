@@ -11,9 +11,7 @@ public class BookUpdateDto
     [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters.")]
     public string Description { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Cover image URL is required.")]
-    [Url(ErrorMessage = "Please provide a valid URL for the cover image.")]
-    public string CoverImageUrl { get; set; } = string.Empty;
+    public IFormFile? File { get; set; }
 
     [Required(ErrorMessage = "Published date is required.")]
     [DataType(DataType.Date)]

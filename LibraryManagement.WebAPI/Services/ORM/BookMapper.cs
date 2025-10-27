@@ -78,6 +78,7 @@ public class BookMapper : IBookMapper
             PublishedDate = book.PublishedDate,
             Pages = book.Pages,
             PublisherId = book.PublisherId,
+            CoverImagePublicId = book.CoverImagePublicId,
             AuthorIds = book.BookAuthors.Select(ba => ba.AuthorId).ToList()
         };
     }
@@ -91,7 +92,6 @@ public class BookMapper : IBookMapper
             Title = book.Title,
             Genre = book.Genre,
             Description = book.Description,
-            CoverImageUrl = book.CoverImageUrl,
             PublishedDate = book.PublishedDate,
             Pages = book.Pages,
             PublisherId = book.PublisherId,
@@ -108,7 +108,6 @@ public class BookMapper : IBookMapper
             Title = book.Title,
             Genre = book.Genre,
             Description = book.Description,
-            CoverImageUrl = book.CoverImageUrl,
             PublishedDate = book.PublishedDate,
             Pages = book.Pages
         };
@@ -121,7 +120,6 @@ public class BookMapper : IBookMapper
         return new Book(
             bookCreateDto.Title,
             bookCreateDto.Description,
-            bookCreateDto.CoverImageUrl,
             bookCreateDto.PublishedDate,
             bookCreateDto.Genre,
             bookCreateDto.Pages
@@ -143,9 +141,6 @@ public class BookMapper : IBookMapper
 
         if (bookUpdateDto.Description != null)
             book.Description = bookUpdateDto.Description;
-
-        if (bookUpdateDto.CoverImageUrl != null)
-            book.CoverImageUrl = bookUpdateDto.CoverImageUrl;
 
         if (bookUpdateDto.PublishedDate != default)
             book.PublishedDate = bookUpdateDto.PublishedDate;

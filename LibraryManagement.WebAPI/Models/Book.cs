@@ -12,6 +12,7 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
     public string Description { get; set; }
     [Required]
     public string CoverImageUrl { get; set; } = string.Empty;
+    public string? CoverImagePublicId { get; set; }
     [Required]
     [DataType(DataType.Date)]
     public DateTime PublishedDate { get; set; }
@@ -28,11 +29,10 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
     {
         
     }
-    public Book( string title, string description, string imageUrl,DateTime publishedDate, Genre genre, int pages)
+    public Book( string title, string description,DateTime publishedDate, Genre genre, int pages)
     {
         Title = title;
         Description = description;  
-        CoverImageUrl = imageUrl;
         PublishedDate = publishedDate;
         Genre = genre;
         Pages = pages;

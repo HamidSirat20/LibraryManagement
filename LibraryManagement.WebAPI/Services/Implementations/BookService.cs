@@ -4,10 +4,8 @@ using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
-using LibraryManagement.WebAPI.Services.ORM;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
 
 namespace LibraryManagement.WebAPI.Services.Implementations;
 
@@ -15,28 +13,31 @@ public class BookService : IBookService
 {
     private readonly LibraryDbContext _dbContext;
     private readonly IBookMapper _bookMapper;
+    private readonly IImageService _imageService;
 
-    public BookService(LibraryDbContext dbContext, IBookMapper bookMapper)
+    public BookService(LibraryDbContext dbContext, IBookMapper bookMapper, IImageService imageService)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        _bookMapper = bookMapper;
+        _bookMapper = bookMapper ?? throw new ArgumentNullException(nameof(bookMapper));
+        _imageService = imageService ?? throw new ArgumentNullException(nameof(imageService));
     }
     public async Task<Book> CreateBookAsync(BookCreateDto bookCreateDto)
     {
+        var book = _bookMapper.ToBook(bookCreateDto);
         if (bookCreateDto == null)
         {
             throw new ArgumentNullException(nameof(bookCreateDto));
         }
-        var book = new Book()
+        if (bookCreateDto.File != null)
         {
-            Title = bookCreateDto.Title,
-            Description = bookCreateDto.Description,
-            CoverImageUrl = bookCreateDto.CoverImageUrl,
-            Genre = bookCreateDto.Genre,
-            PublishedDate = bookCreateDto.PublishedDate,
-            Pages = bookCreateDto.Pages,
-            PublisherId = bookCreateDto.PublisherId
-        };
+            var uploadResult = await _imageService.AddImageAsync(bookCreateDto.File);
+            if (uploadResult.Error != null)
+            {
+                throw new Exception($"Image upload failed: {uploadResult.Error.Message}");
+            }
+            book.CoverImageUrl = uploadResult.SecureUrl.ToString();
+            book.CoverImagePublicId = uploadResult.PublicId;
+        }
 
         foreach (var authorId in bookCreateDto.AuthorIds)
         {
@@ -56,6 +57,7 @@ public class BookService : IBookService
        var book  = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == id);
         if (book == null) return false;
         _dbContext.Books.Remove(book);
+        await _imageService.DeleteImageAsync(book.CoverImagePublicId!);
         return await SaveChangesAsync();
     }
 
@@ -151,6 +153,21 @@ public class BookService : IBookService
             .Include(b => b.Publisher)
             .Include(b => b.BookAuthors)
             .FirstOrDefaultAsync(b => b.Id == id);
+
+        if(bookUpdateDto.File != null)
+        {
+            if (!string.IsNullOrEmpty(existingBook?.CoverImagePublicId))
+            {
+                await _imageService.DeleteImageAsync(existingBook.CoverImagePublicId);
+            }
+            var uploadResult = await _imageService.AddImageAsync(bookUpdateDto.File);
+            if (uploadResult.Error != null)
+            {
+                throw new Exception($"Image upload failed: {uploadResult.Error.Message}");
+            }
+            existingBook!.CoverImageUrl = uploadResult.SecureUrl.ToString();
+            existingBook.CoverImagePublicId = uploadResult.PublicId;
+        }
 
         if (existingBook == null)
             throw new ArgumentException("Book not found");
