@@ -19,9 +19,13 @@ namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
 //[Authorize]
-[ResponseCache(CacheProfileName = "120SecondsCacheProfile")]
+//[ResponseCache(CacheProfileName = "120SecondsCacheProfile")]
 [Route("api/v{version:ApiVersion}/[controller]")]
 [ApiVersion("1.0")]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+[ProducesResponseType(StatusCodes.Status405MethodNotAllowed)]
+[ProducesResponseType(StatusCodes.Status400BadRequest)]
 public class BooksController : ControllerBase
 {
     private readonly ILogger<BooksController> _logger;

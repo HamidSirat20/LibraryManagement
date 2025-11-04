@@ -12,5 +12,7 @@
         public int Pages { get; set; }
         public ICollection<Guid> AuthorIds { get; set; }
         public Guid PublisherId { get; set; }
+
+
     }
 }

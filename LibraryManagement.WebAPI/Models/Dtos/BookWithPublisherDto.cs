@@ -18,5 +18,5 @@ public class BookWithPublisherDto
     public int Pages { get; set; }
     public IList<AuthorDto> BookAuthors { get; set; } = new List<AuthorDto>();
     public Guid PublisherId { get; set; }
-    public PublisherDto Publisher { get; set; } = default!;
+    public PublisherReadDto Publisher { get; set; } = default!;
 }

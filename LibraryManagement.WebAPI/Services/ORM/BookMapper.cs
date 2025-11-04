@@ -28,11 +28,12 @@ public class BookMapper : IBookMapper
                     Bio = ba.Author.Bio,
                     BookCount = ba.Author.BookAuthors.Count
                 }).ToList(),
-            Publisher = new PublisherDto
+            Publisher = new PublisherReadDto
             {
                 Id = book.Publisher.Id,
                 Name = book.Publisher.Name,
                 Address = book.Publisher.Address,
+                Email = book.Publisher.Email,
                 Website = book.Publisher.Website,
                 BookCount = book.Publisher.Books.Count
             }

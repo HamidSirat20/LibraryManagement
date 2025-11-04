@@ -118,29 +118,12 @@ public class BookService : IBookService
         //orderby
         if (!string.IsNullOrWhiteSpace(queryOptions.OrderBy))
         {
-            var sortBy = queryOptions.OrderBy.Trim().ToLower();
-            var isDescending = queryOptions.IsDescending;
-            var allowedSortFields = new[] { "title", "publisheddate", "genre", "publisher","author" };
-
-            if (!allowedSortFields.Contains(sortBy))
-            {
-                sortBy = "title";
-            }
-
-            query = (sortBy, isDescending) switch
-            {
-                ("title", false) => query.OrderBy(b => b.Title),
-                ("title", true) => query.OrderByDescending(b => b.Title),
-                ("publisheddate", false) => query.OrderBy(b => b.PublishedDate),
-                ("publisheddate", true) => query.OrderByDescending(b => b.PublishedDate),
-                ("genre", false) => query.OrderBy(b => b.Genre),
-                ("genre", true) => query.OrderByDescending(b => b.Genre),
-                ("publisher", false) => query.OrderBy(b => b.Publisher != null ? b.Publisher.Name : ""),
-                ("publisher", true) => query.OrderByDescending(b => b.Publisher != null ? b.Publisher.Name : ""),
-                _ => query.OrderBy(b => b.Title)
-            };
-
-
+            query = query.ApplySorting(queryOptions.OrderBy, queryOptions.IsDescending, "Title");
+        }
+        else
+        {
+           
+            query = query.ApplySorting(null, false, "Title");
         }
         //pagination 
         return await PaginatedResponse<Book>.CreateAsync(query, queryOptions.PageNumber, queryOptions.PageSize);

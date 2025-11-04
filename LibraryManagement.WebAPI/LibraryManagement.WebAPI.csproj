@@ -33,8 +33,4 @@
     <None Include="F:\Integfiy Folder\Back-End\Practice Projects\LibraryManagement\LibraryManagement.WebAPI\.editorconfig" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="LogFile\" />
-  </ItemGroup>
-
 </Project>

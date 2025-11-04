@@ -1,26 +1,24 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace LibraryManagement.WebAPI.Models;
 
 public class Publisher : BaseEntityWithId
 {
-    public string Name { get; init; }
+    public string Name { get; set; }
     public string Address { get; set; }
     public string Website { get; set; }
+    public string Email { get; set; }
     // Navigation properties
     public List<Book> Books { get; set; } = new();
 
     public Publisher() { }
 
-    public Publisher(Guid id, string name, string address, string website)
+    public Publisher( string name, string address, string website, string email)
     {
-        Id = id;
         Name = name;
         Address = address;
         Website = website;
+        Email = email;
     }
 
-    public override string ToString() => $"{Name} ({Website}) - {Address}";
+    public override string ToString() => $"{Name} ({Website}) - {Address} - {Email}";
 
 }

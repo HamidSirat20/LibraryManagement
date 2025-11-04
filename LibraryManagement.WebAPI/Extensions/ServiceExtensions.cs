@@ -27,8 +27,10 @@ namespace LibraryManagement.WebAPI.Extensions
                     {
                         Duration = 120
                     });
-
-            })
+                //global authorization filter
+               // configure.Filters.Add(new AuthorizeFilter() );
+            }
+            )
                 .AddNewtonsoftJson(options =>
                 {
                     options.SerializerSettings.Converters.Add(new StringEnumConverter());
@@ -78,6 +80,8 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<IPropertyCheckerService, PropertyCheckerService>();
             webApplication.Services.AddScoped<IPasswordService, PasswordService>();
             webApplication.Services.AddScoped<IImageService, ImageService>();
+            webApplication.Services.AddScoped<IPublisherService, PublisherService>();
+            webApplication.Services.AddScoped<IPublisherMapper, PublisherMapper>();
 
             // Add DbContext
             webApplication.Services.AddDbContext<LibraryDbContext>(options =>
