@@ -82,6 +82,8 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<IImageService, ImageService>();
             webApplication.Services.AddScoped<IPublisherService, PublisherService>();
             webApplication.Services.AddScoped<IPublisherMapper, PublisherMapper>();
+            webApplication.Services.AddScoped<IAuthorService, AuthorService>();
+            webApplication.Services.AddScoped<IAuthorMapper, AuthorMapper>();
 
             // Add DbContext
             webApplication.Services.AddDbContext<LibraryDbContext>(options =>

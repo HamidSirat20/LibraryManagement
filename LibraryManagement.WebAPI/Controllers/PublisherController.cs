@@ -6,6 +6,7 @@ using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using static LibraryManagement.WebAPI.Helpers.ApiRoutes;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
@@ -38,12 +39,12 @@ public class PublisherController : ControllerBase
     public async Task<IActionResult> GetAllPublisher([FromQuery] QueryOptions queryOptions )
     {
         var readPublisherDtos = await _publisherService.ListAllPublisherAsync(queryOptions);
-
         
+
         return Ok(readPublisherDtos);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("id/{id:guid}")]
     public async Task<IActionResult> GetPublisherById(Guid id)
     {
         var publisher = await _publisherService.GetPublisherByIdAsync(id);
@@ -54,7 +55,7 @@ public class PublisherController : ControllerBase
         var readPublisherDto = _publisherMapper.ToPublisherReadDto(publisher);
         return Ok(readPublisherDto);
     }
-    [HttpGet("{email}")]
+    [HttpGet("email/{email}")]
     public async Task<IActionResult> GetPublisherById([FromRoute] string email)
     {
         var publisher = await _publisherService.GetPublisherByEmailAsync(email);

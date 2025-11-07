@@ -10,8 +10,7 @@ public class RequestHeaderMatchesMediaTypeAttribute : Attribute, IActionConstrai
     private readonly string _requestHeaderToMatch;
     private readonly MediaTypeCollection _mediaTypes = new MediaTypeCollection();
 
-    public RequestHeaderMatchesMediaTypeAttribute(string requestHeaderToMatch,
-        string mediaType, params string[] otherMediaTypes)
+    public RequestHeaderMatchesMediaTypeAttribute(string requestHeaderToMatch,string mediaType, params string[] otherMediaTypes)
     {
         _requestHeaderToMatch = requestHeaderToMatch
             ?? throw new ArgumentNullException(nameof(requestHeaderToMatch));

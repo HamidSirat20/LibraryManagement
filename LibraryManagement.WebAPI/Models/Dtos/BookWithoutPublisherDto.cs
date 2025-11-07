@@ -16,6 +16,6 @@ namespace LibraryManagement.WebAPI.Models.Dtos
         public DateTime PublishedDate { get; set; }
         public Genre Genre { get; set; }
         public int Pages { get; set; }
-        public IList<AuthorDto> BookAuthors { get; set; } = new List<AuthorDto>();
+        public IList<AuthorReadDto> BookAuthors { get; set; } = new List<AuthorReadDto>();
     }
 }

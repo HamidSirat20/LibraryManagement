@@ -21,6 +21,7 @@ public class BookService : IBookService
         _bookMapper = bookMapper ?? throw new ArgumentNullException(nameof(bookMapper));
         _imageService = imageService ?? throw new ArgumentNullException(nameof(imageService));
     }
+    #region CreateBookAsync
     public async Task<Book> CreateBookAsync(BookCreateDto bookCreateDto)
     {
         var book = _bookMapper.ToBook(bookCreateDto);
@@ -51,7 +52,9 @@ public class BookService : IBookService
         await SaveChangesAsync();
         return book;
     }
+    #endregion
 
+    #region DeleteBookByIdAsync
     public async Task<bool?> DeleteBookByIdAsync(Guid id)
     {
        var book  = await _dbContext.Books.FirstOrDefaultAsync(b => b.Id == id);
@@ -60,11 +63,17 @@ public class BookService : IBookService
         await _imageService.DeleteImageAsync(book.CoverImagePublicId!);
         return await SaveChangesAsync();
     }
+    #endregion
+
+    #region EntityExistAsync
 
     public async Task<bool> EntityExistAsync(Guid id)
     {
          return await _dbContext.Books.AnyAsync(b =>b.Id == id);
     }
+    #endregion
+
+    #region GetByIdAsync
 
     public async Task<Book?> GetByIdAsync(Guid id, bool includePublisher = false)
     {
@@ -83,7 +92,8 @@ public class BookService : IBookService
                 .AsNoTracking()
                 .FirstOrDefaultAsync(b => b.Id == id);
     }
-
+    #endregion
+    #region GetAllBooksAsync
     public async Task<PaginatedResponse<Book>> ListAllBooksAsync(QueryOptions queryOptions)
     {
         if (queryOptions == null)
@@ -129,6 +139,8 @@ public class BookService : IBookService
         return await PaginatedResponse<Book>.CreateAsync(query, queryOptions.PageNumber, queryOptions.PageSize);
 
     }
+    #endregion
+    #region UpdateBookAsync
 
     public async Task<Book> UpdateBookAsync(Guid id, BookUpdateDto bookUpdateDto)
     {
@@ -160,11 +172,14 @@ public class BookService : IBookService
 
         return existingBook;
     }
+    #endregion
+    #region SaveChangesAsync
     public async Task<bool> SaveChangesAsync()
     {
         return (await _dbContext.SaveChangesAsync() >= 0);
     }
-
+    #endregion
+    #region PartiallyUpdateBookAsync
     public async Task<Book> PartiallyUpdateBookAsync(Book book)
     {
         if (book == null)
@@ -175,6 +190,7 @@ public class BookService : IBookService
         await _dbContext.SaveChangesAsync();
         return book;
     }
+    #endregion
 
 }
 

@@ -19,7 +19,7 @@ public class BookMapper : IBookMapper
             PublishedDate = book.PublishedDate,
             Pages = book.Pages,
             BookAuthors = book.BookAuthors
-                .Select(ba => new AuthorDto
+                .Select(ba => new AuthorReadDto
                 {
                     Id = ba.Author.Id,
                     FirstName = ba.Author.FirstName,
@@ -54,7 +54,7 @@ public class BookMapper : IBookMapper
             PublishedDate = book.PublishedDate,
             Pages = book.Pages,
             BookAuthors = book.BookAuthors
-                .Select(ba => new AuthorDto
+                .Select(ba => new AuthorReadDto
                 {
                     Id = ba.Author.Id,
                     FirstName = ba.Author.FirstName,

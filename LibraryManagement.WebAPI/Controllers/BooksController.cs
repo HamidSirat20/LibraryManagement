@@ -59,6 +59,7 @@ public class BooksController : ControllerBase
                 statusCode: 400,
                 title: "Bad request",
                 detail: $"The fields {queryOptions.Fields} are invalid."));
+                
         }
 
         // var paginationMetadata 
@@ -69,33 +70,35 @@ public class BooksController : ControllerBase
             currentPage = books.CurrentPage,
             totalPages = books.TotalPages,
         };
+        Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
 
         var bookWithPublisherDto = new List<BookWithPublisherDto>();
         foreach (var book in books)
         {
             bookWithPublisherDto.Add(_bookMapper.ToBookWithPublisherDto(book));
         }
-        Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
 
-            //links 
-            var links = CreateLinksForBooks(queryOptions, books.HasPrevious, books.HasNext);
-            var shapedBooks = bookWithPublisherDto.ShapeFields(queryOptions.Fields);
-            var shapedBooksWithLinks = shapedBooks.Select(book =>
-            {
-                var bookAsDictionary = book as IDictionary<string, object>;
-                var bookLinks = CreateLinksForBook((Guid)bookAsDictionary["Id"], queryOptions.Fields);
-                bookAsDictionary.Add("links", bookLinks);
-                return bookAsDictionary;
+        //links 
+        var links = CreateLinksForBooks(queryOptions, books.HasPrevious, books.HasNext);
+        var shapedBooks = bookWithPublisherDto.ShapeFields(queryOptions.Fields);
+        var shapedBooksWithLinks = shapedBooks.Select(book =>
+        {
+            var bookAsDictionary = book as IDictionary<string, object>;
+            var bookLinks = CreateLinksForBook((Guid)bookAsDictionary["Id"], queryOptions.Fields);
+            bookAsDictionary.Add("links", bookLinks);
+            return bookAsDictionary;
 
-            });
+        });
 
-            var result = new
-            {
-                value = shapedBooksWithLinks,
-                links
-            };
-            return Ok(result);
+
+        var result = new
+        {
+            value = shapedBooksWithLinks,
+            links
+        };
+        return Ok(result);
     }
+
     [Produces("application/json", "application/xml")]
     [RequestHeaderMatchesMediaTypeAttribute("Accept",
          "application/json", "application/xml")]
@@ -137,7 +140,7 @@ public class BooksController : ControllerBase
         switch (type)
         {
             case ResourceUriType.PreviousPage:
-                return Url.Link("GetAllBooks",
+                return Url.Link(ApiRoutes.Books.GetAllBooks,
                     new
                     {
                         Fields = queryOptions.Fields,
@@ -149,7 +152,7 @@ public class BooksController : ControllerBase
                         desc = queryOptions.IsDescending
                     });
             case ResourceUriType.NextPage:
-                return Url.Link("GetAllBooks",
+                return Url.Link(ApiRoutes.Books.GetAllBooks,
                     new
                     {
                         Fields = queryOptions.Fields,
@@ -162,7 +165,7 @@ public class BooksController : ControllerBase
                     });
             case ResourceUriType.Current:
             default:
-                return Url.Link("GetAllBooks",
+                return Url.Link(ApiRoutes.Books.GetAllBooks,
                     new
                     {
                         Fields = queryOptions.Fields,
