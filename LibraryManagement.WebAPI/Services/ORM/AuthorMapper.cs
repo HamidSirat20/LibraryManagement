@@ -15,8 +15,8 @@ public class AuthorMapper : IAuthorMapper
             Id = author.Id,
             FirstName = author.FirstName,
             LastName = author.LastName,
-            Email = author.Email,
-            Bio = author.Bio,
+            Email = author?.Email ?? "no-email@mail.com",
+            Bio = author?.Bio ?? "no bio provided.",
             CreatedAt = author.CreatedAt,
             UpdatedAt = author.UpdatedAt,
             BookCount = author.BookAuthors?.Count ?? 0

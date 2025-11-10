@@ -135,6 +135,7 @@ namespace LibraryManagement.WebAPI.Services.Implementations;
             try
             {
                 var author = await _context.Authors
+                            .Include(p=>p.BookAuthors)
                             .AsNoTracking()
                             .FirstOrDefaultAsync(a => a.Id == id);
                 if(author == null)
@@ -275,8 +276,11 @@ namespace LibraryManagement.WebAPI.Services.Implementations;
             using var _ = _logger.BeginScope("Updating author");
             try
             {
-                var author = await _context.Authors.FindAsync(id);
-                if (author == null)
+            var author = await _context.Authors
+                            .Include(a => a.BookAuthors)        
+                            .ThenInclude(ba => ba.Book)          
+                            .FirstOrDefaultAsync(a => a.Id == id);
+            if (author == null)
                 {
                     _logger.LogWarning("Author with ID {AuthorId} not found for update", id);
                     throw new KeyNotFoundException($"Author not found");

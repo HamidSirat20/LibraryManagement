@@ -19,7 +19,6 @@ public class AuthorReadDto
 }
 public class AuthorCreateDto
     {
-    public Guid Id { get; set; }
 
     [Required]
     [MaxLength(30, ErrorMessage = "First name cannot be longer than 30 characters.")]
@@ -38,9 +37,6 @@ public class AuthorCreateDto
     [Required]
     [StringLength(1000, ErrorMessage = "Bio cannot be longer than 1000 characters.")]
     public string Bio { get; set; } = string.Empty;
-
-    public DateTime? CreatedAt { get; set; } 
-    public DateTime? UpdatedAt { get; set; } 
 
 }
 
@@ -63,7 +59,6 @@ public class AuthorUpdateDto
     [Required]
     [StringLength(1000, ErrorMessage = "Bio cannot be longer than 1000 characters.")]
     public string Bio { get; set; } = string.Empty;
-    public DateTime? UpdatedAt { get; set; }
 
 }
 
