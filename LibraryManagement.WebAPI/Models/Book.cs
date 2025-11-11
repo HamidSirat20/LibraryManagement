@@ -19,8 +19,13 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
     public Genre Genre { get; set; }
     public int Pages { get; set; }
 
+    public bool IsAvailable => !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
+                           && !Reservations.Any(r => r.ReservationStatus == ReservationStatus.Pending);
+
+
     [Required]
     public IList<BookAuthor> BookAuthors { get; set; } = new List<BookAuthor>();
+    public List<Reservation> Reservations { get; set; } = new();
     public List<Loan> Loans { get; set; } = new List<Loan>();
     public Guid PublisherId { get; set; }
     public Publisher Publisher { get; set; } = default!;

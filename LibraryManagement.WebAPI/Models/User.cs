@@ -1,9 +1,13 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace LibraryManagement.WebAPI.Models;
 
 public class User: BaseEntityWithId
 {
     public string FirstName { get; set; }
     public string LastName { get; set; }
+    [NotMapped]
+    public string FullName => $"{FirstName} {LastName}";
     public string Email { get; set; }
     public string Password { get; set; }
     public string Phone { get; set; }

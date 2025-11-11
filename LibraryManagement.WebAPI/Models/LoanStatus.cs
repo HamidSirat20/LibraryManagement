@@ -5,7 +5,6 @@ public enum LoanStatus
     Active,
     Returned,
     Overdue,
-    Renewed,
     Lost,
     Pending
 }

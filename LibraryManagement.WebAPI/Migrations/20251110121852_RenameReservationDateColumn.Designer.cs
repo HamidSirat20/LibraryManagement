@@ -4,6 +4,7 @@ using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LibraryManagement.WebAPI.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    partial class LibraryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251110121852_RenameReservationDateColumn")]
+    partial class RenameReservationDateColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -27,7 +30,6 @@ namespace LibraryManagement.WebAPI.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "fine_status", new[] { "pending", "paid", "waived" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "genre", new[] { "fiction", "non_fiction", "mystery", "science_fiction", "fantasy", "biography", "history", "romance", "thriller", "horror", "other" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "loan_status", new[] { "active", "returned", "overdue", "lost", "pending" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "reservation_status", new[] { "pending", "notified", "fulfilled", "cancelled" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "user_role", new[] { "user", "admin" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_role", new[] { "admin", "user" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -333,13 +335,13 @@ namespace LibraryManagement.WebAPI.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<int>("ReservationStatus")
-                        .HasColumnType("reservation_status")
-                        .HasColumnName("reservation_status");
-
                     b.Property<DateTime>("ReservedAt")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("reserved_at");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone")

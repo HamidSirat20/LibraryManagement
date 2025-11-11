@@ -84,6 +84,11 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<IPublisherMapper, PublisherMapper>();
             webApplication.Services.AddScoped<IAuthorService, AuthorService>();
             webApplication.Services.AddScoped<IAuthorMapper, AuthorMapper>();
+            webApplication.Services.AddScoped<ILoanService, LoanService>();
+            webApplication.Services.AddScoped<ILoanMapper, LoanMapper>();
+            webApplication.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+            webApplication.Services.AddHttpContextAccessor();
+
 
             // Add DbContext
             webApplication.Services.AddDbContext<LibraryDbContext>(options =>

@@ -34,6 +34,7 @@ namespace LibraryManagement.WebAPI.Data
             dataSourceBuilder.MapEnum<Genre>("genre");
             dataSourceBuilder.MapEnum<FineStatus>("fine_status");
             dataSourceBuilder.MapEnum<LoanStatus>("loan_status");
+            dataSourceBuilder.MapEnum<ReservationStatus>("reservation_status");
 
             var dataSource = dataSourceBuilder.Build();
 
@@ -48,6 +49,7 @@ namespace LibraryManagement.WebAPI.Data
             modelBuilder.HasPostgresEnum<Genre>("public", "genre");
             modelBuilder.HasPostgresEnum<FineStatus>("public", "fine_status");
             modelBuilder.HasPostgresEnum<LoanStatus>("public", "loan_status");
+            modelBuilder.HasPostgresEnum<ReservationStatus>("public", "reservation_status");
 
             modelBuilder.Entity<User>()
                         .Property(u => u.Role)
@@ -60,6 +62,10 @@ namespace LibraryManagement.WebAPI.Data
             modelBuilder.Entity<Loan>()
                         .Property(l => l.LoanStatus)
                         .HasColumnType("loan_status");
+            
+            modelBuilder.Entity<Reservation>()
+                        .Property(r => r.ReservationStatus)
+                        .HasColumnType("reservation_status");   
 
 
             base.OnModelCreating(modelBuilder);

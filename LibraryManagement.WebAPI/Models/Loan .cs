@@ -6,7 +6,6 @@ public class Loan : BaseEntityWithId
 {
     [Required]
     public Guid UserId { get; set; }
-
     [Required]
     public Guid BookId { get; set; }
 
@@ -25,10 +24,13 @@ public class Loan : BaseEntityWithId
 
     public decimal? LateFee { get; set; }
 
+    private const decimal DailyLateFee = 1.0m;
+
     // Navigation properties
     public User User { get; set; } = default!;
     public Book Book { get; set; } = default!;
     public List<LateReturnOrLostFee> LateReturnOrLostFees { get; set; } = new();
+    public Loan() { }
     public Loan(Guid id, Guid bookId, Guid userId, DateTime loanDate, DateTime dueDate, DateTime? returnDate = null)
     {
         Id = id;
@@ -38,6 +40,19 @@ public class Loan : BaseEntityWithId
         DueDate = dueDate;
         ReturnDate = returnDate;
     }
-
     public override string ToString() => $"Loan ID: {Id}, Book ID: {BookId}, Member ID: {UserId}, Loan Date: {LoanDate}, Due Date: {DueDate}, Return Date: {ReturnDate?.ToString() ?? "Not Returned"}";
+
+    public void CalculateLateFee()
+    {
+        DateTime endDate = ReturnDate ?? DateTime.UtcNow;
+        if (endDate > DueDate)
+        {
+            var lateDays = (endDate - DueDate).Days;
+            LateFee = lateDays * DailyLateFee;
+        }
+        else
+        {
+            LateFee = 0;
+        }
+    }
 }
