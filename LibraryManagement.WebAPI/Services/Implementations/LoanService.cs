@@ -1,4 +1,5 @@
-﻿using LibraryManagement.WebAPI.Data;
+﻿using LibraryManagement.WebAPI.CustomExceptionHandler;
+using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
@@ -20,10 +21,10 @@ public class LoanService : ILoanService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Loan> MakeLoanAsync(LoanCreateDto loanCreateDto)
+    public async Task<LoanReadDto> MakeLoanAsync(LoanCreateDto loanCreateDto, Guid userId)
     {
-        using var _ = _logger.BeginScope("Making a new loan for BookId: {BookId} by UserId: {UserId}",
-            loanCreateDto.BookId, loanCreateDto.UserId);
+        using var _ = _logger.BeginScope("Making a new loan for BookId: {BookId}",
+            loanCreateDto.BookId);
 
         var book = await _context.Books
             .AsNoTracking()
@@ -40,16 +41,29 @@ public class LoanService : ILoanService
             throw new InvalidOperationException($"Book with ID {loanCreateDto.BookId} is not available.");
         }
 
-        var loan = _mapper.ToLoan(loanCreateDto) ??
-                   throw new InvalidOperationException("Mapping failed.");
-
-        loan.LoanStatus = LoanStatus.Active;
+        var loan = new Loan
+        {
+            UserId = userId,
+            BookId = loanCreateDto.BookId,
+            LoanDate = DateTime.UtcNow,
+            DueDate = DateTime.UtcNow.AddDays(30),
+            ReturnDate = null,
+            LoanStatus = LoanStatus.Active
+        };
 
         _context.Loans.Add(loan);
         await _context.SaveChangesAsync();
 
+        var loanWithDetails = await _context.Loans
+                                            .Include(l => l.User)
+                                            .Include(l => l.Book)
+                                            .Include(l => l.LateReturnOrLostFees)
+                                            .FirstOrDefaultAsync(l => l.Id == loan.Id);
+
+        var loanReadDto = _mapper.ToLoanReadDto(loanWithDetails);
+
         _logger.LogInformation("Created new loan with ID: {LoanId}", loan.Id);
-        return loan;
+        return loanReadDto;
     }
 
     public async Task<IEnumerable<Loan>> GetYourOwnLoansAsync(Guid userId, bool includeReturnedLoans = false)
@@ -148,8 +162,8 @@ public class LoanService : ILoanService
                                             .FirstOrDefaultAsync(l => l.Id == loanId);
             if (loan == null)
             {
-                _logger.LogWarning("Loan with {loan.Id} does not exist!", loan.Id);
-                throw new ArgumentNullException(nameof(loan));
+                _logger.LogWarning("Loan with {loan.Id} does not exist!", loanId);
+                throw new BusinessRuleViolationException($"Book with {loanId} not found","Not_Found");
             }
             _logger.LogInformation("Loan with Id {loan.Id} returned!",loan.Id);
             return loan;
@@ -183,20 +197,18 @@ public class LoanService : ILoanService
         try
         {
             var returnLoan = await GetLoanByIdAsync(loanId);
-            if (returnLoan != null)
+            if (returnLoan == null)
             {
+                _logger.LogWarning($"Loan with {loanId} id not found.");
+                throw new Exception($"Loan with {loanId} id not found.");
+            }
 
-                returnLoan.LoanStatus = LoanStatus.Returned;
-                returnLoan.ReturnDate = DateTime.UtcNow;
-                returnLoan.CalculateLateFee();
-                await _context.SaveChangesAsync();
-                _logger.LogInformation("Loan with id {loanId} returned.", loanId);
-                return returnLoan;
-            }
-            else
-            {
-                throw new ArgumentNullException(nameof(loanId));
-            }
+            returnLoan.LoanStatus = LoanStatus.Returned;
+            returnLoan.ReturnDate = DateTime.UtcNow;
+            returnLoan.CalculateLateFee();
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Loan with id {loanId} returned.", loanId);
+            return returnLoan;
         }
         catch (Exception ex) 
         {

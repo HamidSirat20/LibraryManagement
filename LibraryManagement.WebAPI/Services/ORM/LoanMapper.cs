@@ -38,20 +38,6 @@ public class LoanMapper : ILoanMapper
         };
     }
 
-    public LoanCreateDto ToLoanCreateDto(Loan loan)
-    {
-        if (loan == null) return null!;
-
-        return new LoanCreateDto
-        {
-            UserId = loan.UserId,
-            BookId = loan.BookId,
-            LoanDate = loan.LoanDate,
-            DueDate = loan.DueDate,
-            ReturnDate = loan.ReturnDate
-        };
-    }
-
     public LoanUpdateDto ToLoanUpdateDto(Loan loan)
     {
         if (loan == null) return null!;
@@ -60,23 +46,21 @@ public class LoanMapper : ILoanMapper
         {
             DueDate = loan.DueDate,
             ReturnDate = loan.ReturnDate,
-            LoanStatus = loan.LoanStatus,
-            LateFee = loan.LateFee
+            LoanStatus = loan.LoanStatus
         };
     }
 
-    public Loan ToLoan(LoanCreateDto dto)
+    public Loan ToLoan(LoanCreateDto dto, Guid userId)
     {
         if (dto == null) return null!;
 
         return new Loan
         {
             Id = Guid.NewGuid(),
-            UserId = dto.UserId,
+            UserId = userId,
             BookId = dto.BookId,
-            LoanDate = dto.LoanDate,
-            DueDate = dto.DueDate,
-            ReturnDate = dto.ReturnDate,
+            LoanDate = DateTime.UtcNow,
+            DueDate = DateTime.UtcNow.AddDays(30),
             LoanStatus = LoanStatus.Active,
             LateFee = 0
         };
@@ -94,9 +78,6 @@ public class LoanMapper : ILoanMapper
 
         if (dto.LoanStatus.HasValue)
             loan.LoanStatus = dto.LoanStatus.Value;
-
-        if (dto.LateFee.HasValue)
-            loan.LateFee = dto.LateFee.Value;
 
         return loan;
     }

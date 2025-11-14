@@ -4,21 +4,7 @@ namespace LibraryManagement.WebAPI.Models.Dtos;
 public class LoanCreateDto
 {
     [Required]
-    public Guid UserId { get; set; }
-
-    [Required]
-    public Guid BookId { get; set; }
-
-    [Required]
-    [DataType(DataType.Date)]
-    public DateTime LoanDate { get; set; }
-
-    [Required]
-    [DataType(DataType.Date)]
-    public DateTime DueDate { get; set; }
-
-    [DataType(DataType.Date)]
-    public DateTime? ReturnDate { get; set; }
+    public Guid BookId { get; set; }  
 }
 public class LoanUpdateDto
 {
@@ -29,8 +15,6 @@ public class LoanUpdateDto
     public DateTime? ReturnDate { get; set; }
 
     public LoanStatus? LoanStatus { get; set; }
-
-    public decimal? LateFee { get; set; }
 }
 
 public class LoanReadDto

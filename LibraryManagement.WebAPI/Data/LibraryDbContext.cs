@@ -62,10 +62,10 @@ namespace LibraryManagement.WebAPI.Data
             modelBuilder.Entity<Loan>()
                         .Property(l => l.LoanStatus)
                         .HasColumnType("loan_status");
-            
+
             modelBuilder.Entity<Reservation>()
-                        .Property(r => r.ReservationStatus)
-                        .HasColumnType("reservation_status");   
+              .Property(l => l.ReservationStatus)
+              .HasColumnType("reservation_status");
 
 
             base.OnModelCreating(modelBuilder);

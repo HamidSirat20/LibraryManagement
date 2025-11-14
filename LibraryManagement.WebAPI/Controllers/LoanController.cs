@@ -1,9 +1,11 @@
 ﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.CustomExceptionHandler;
 using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.WebAPI.Controllers;
@@ -34,19 +36,11 @@ public class LoanController : ControllerBase
             // Fetch current logged in user
             var userId = _currentUserService.UserId();
 
-            var loan = await _loanService.MakeLoanAsync(new LoanCreateDto
-            {
-                BookId = loanCreateDto.BookId,
-                UserId = userId,
-                LoanDate = DateTime.UtcNow,
-                DueDate = DateTime.UtcNow.AddDays(30),
-                ReturnDate = null
-            });
+            var loanDto = await _loanService.MakeLoanAsync(loanCreateDto,userId);
 
-            var loanDto = _loanMapper.ToLoanReadDto(loan);
-            _logger.LogInformation("Successfully created loan with ID: {LoanId}", loan.Id);
+            _logger.LogInformation("Successfully created loan with ID: {LoanId}", loanDto.Id);
 
-            return CreatedAtAction("GetLoanById", new { id = loan.Id }, loanDto);
+            return CreatedAtAction("GetLoanById", new { id = loanDto.Id }, loanDto);
         }
         catch (KeyNotFoundException ex)
         {
@@ -91,27 +85,61 @@ public class LoanController : ControllerBase
     [HttpGet("{id}",Name ="GetLoanById")]
     public async Task<IActionResult> GetLoanById([FromRoute] Guid id)
     {
-        var loan =await _loanService.GetLoanByIdAsync(id);
-        if(loan is null)
+        try
         {
-            _logger.LogError("There no such loan.");
-            return BadRequest();
+            var loan = await _loanService.GetLoanByIdAsync(id);
+            if (loan is null)
+            {
+                _logger.LogError("There no such loan.");
+                return BadRequest();
+            }
+
+            var loanDto = _loanMapper.ToLoanReadDto(loan);
+            return Ok(loanDto);
         }
-        var loanDto =  _loanMapper.ToLoanReadDto(loan);
-        return Ok(loanDto);
+        catch (BusinessRuleViolationException ex)
+        {
+            var statusCode = ex.ErrorCode switch
+            {
+                "Not_Found" => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest
+            };
+
+            return Problem(
+                       detail: ex.Message,
+                       title: "Loan not found",
+                       statusCode: statusCode,
+                       type: $"https://localhost:7127//{ex.ErrorCode}");
+        }
+        catch
+        {
+            throw;
+        }
     }
 
-    [HttpPut("{loanId}")]
+    [HttpPatch("{loanId}")]
     public async Task<IActionResult> ReturnLoanAsync([FromRoute] Guid loanId)
     {
-        var returnLoan =await _loanService.ReturnBookAsync(loanId);
-        if(returnLoan is null)
-            {
-            _logger.LogError("There no such loan to return.");
-            return BadRequest();
+        try
+        {
+            var loan = await _loanService.ReturnBookAsync(loanId);
+            var loanDto = _loanMapper.ToLoanReadDto(loan);
+            return Ok(loanDto);
         }
-        var loanDto = _loanMapper.ToLoanReadDto(returnLoan);
-        return Ok(loanDto);
+        catch (BusinessRuleViolationException ex)
+        {
+            _logger.LogWarning(ex, "Failed to return loan with id {LoanId}", loanId);
+            return Problem(
+                detail: "Cannot return this loan.",
+                title: "Return Loan Error",
+                statusCode: ex.ErrorCode == "Not_Found" ? 404 : 400
+            );
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while returning loan with id {LoanId}", loanId);
+            return StatusCode(500, "An unexpected error occurred.");
+        }
     }
 
     [HttpGet("my-loans")]
@@ -161,7 +189,7 @@ public class LoanController : ControllerBase
         return Ok(loanDtos);
     }
 
-    [HttpPut("update/{loanId}")]
+    [HttpPut("{loanId}")]
     public async Task<IActionResult> UpdateLoanAsync([FromRoute] Guid loanId)
     {
         var updatedLoan = await _loanService.UpdateLoanAsync(loanId);

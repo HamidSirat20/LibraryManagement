@@ -2,11 +2,12 @@ namespace LibraryManagement.WebAPI.Models;
 
 public class Reservation: BaseEntityWithId
 {
-    public Guid BookId { get; set; }
-    public Guid UserId { get; set; }
+
     public DateTime ReservedAt { get; set; } = DateTime.UtcNow;
     public ReservationStatus ReservationStatus { get; set; } = ReservationStatus.Pending;
-
+    public int QueuePosition { get; set; }
+    public Guid BookId { get; set; }
+    public Guid UserId { get; set; }
     public Book Book { get; set; } = default!;
     public User User { get; set; } = default!;
     public Reservation()

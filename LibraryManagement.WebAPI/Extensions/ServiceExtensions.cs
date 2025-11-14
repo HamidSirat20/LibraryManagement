@@ -87,6 +87,8 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<ILoanService, LoanService>();
             webApplication.Services.AddScoped<ILoanMapper, LoanMapper>();
             webApplication.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+            webApplication.Services.AddScoped<IReservationMapper, ReservationMapper>();
+            webApplication.Services.AddScoped<IReservationService, ReservationService>();
             webApplication.Services.AddHttpContextAccessor();
 
 
@@ -100,6 +102,8 @@ namespace LibraryManagement.WebAPI.Extensions
                         npgsqlOptions.MapEnum<Genre>("genre");
                         npgsqlOptions.MapEnum<FineStatus>("fine_status");
                         npgsqlOptions.MapEnum<LoanStatus>("loan_status");
+                        npgsqlOptions.MapEnum<ReservationStatus>("reservation_status");
+
                     });
             });
             webApplication.Services.AddResponseCaching();

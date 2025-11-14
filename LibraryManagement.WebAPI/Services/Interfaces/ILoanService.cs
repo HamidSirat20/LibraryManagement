@@ -6,7 +6,7 @@ using LibraryManagement.WebAPI.Models.Dtos;
 namespace LibraryManagement.WebAPI.Services.Interfaces;
     public interface ILoanService
     {
-    Task<Loan> MakeLoanAsync(LoanCreateDto loanCreateDto);
+    Task<LoanReadDto> MakeLoanAsync(LoanCreateDto loanCreateDto,Guid userId);
     Task<Loan> GetLoanByIdAsync(Guid loanId);
     Task<PaginatedResponse<Loan>> GetAllLoansAsync(QueryOptions queryOptions);
     Task<Loan> UpdateLoanAsync(Guid loanId);
