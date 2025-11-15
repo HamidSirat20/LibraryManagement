@@ -35,15 +35,14 @@ public class ReservationService : IReservationService
             {
                 _logger.LogError("The book was not found for reservation!");
                 throw new BusinessRuleViolationException(
-                                                       $"Book with ID {bookId} not found.",
+                                                       $"Book with this {bookId} id not found.",
                                                        "BOOK_NOT_FOUND");
             }
-            // Check if the book is available for resrvation
+            // Check if the book is available for reservation
             if (book.IsAvailable)
             {
-                _logger.LogInformation("Book {BookId} is available; no need to reserve.", bookId);
-                throw new BusinessRuleViolationException(
-                                                         "Book is currently available for loan — no need to reserve.",
+                _logger.LogInformation("Book {BookId} is available for immediate checkout - no reservation needed.", bookId);
+                throw new BusinessRuleViolationException("Book is available for immediate checkout - no reservation needed.",
                                                          "BOOK_AVAILABLE");
             }
             // Check if the user already has an active reservation for the book
@@ -55,9 +54,8 @@ public class ReservationService : IReservationService
             if (existingReservation != null)
             {
                 _logger.LogWarning("User {UserId} already has a reservation for Book {BookId}.", userId, bookId);
-                throw new BusinessRuleViolationException(
-                                                       "You already have a reservation for this book.",
-                                                       "DUPLICATE_RESERVATION");
+                throw new BusinessRuleViolationException("You already have a reservation for this book.",
+                                                          "DUPLICATE_RESERVATION");
             }
 
 
@@ -81,34 +79,52 @@ public class ReservationService : IReservationService
             _context.Reservations.Add(reservation);
             await _context.SaveChangesAsync();
 
-            var dto = _reservationMapper.ToReservationReadDto(reservation);
+            var reservationReadDto = _reservationMapper.ToReservationReadDto(reservation);
 
 
             _logger.LogInformation("Reservation created for Book {BookId} by User {UserId}.", bookId, userId);
-            return dto;
+            return reservationReadDto;
         }
         catch(DbUpdateException ex)
         {
-            _logger.LogError(ex.Message,"There was some mistake while making a reservation");
-            throw new BusinessRuleViolationException(
-                                                    "A system error occurred while creating the reservation. Please try again.",
-                                                    "DATABASE_ERROR");
+            _logger.LogError(ex.Message,"There was some mistake while making a reservation.");
+            throw new DbUpdateException( "A system error occurred while creating the reservation. Please try again.");
         }
-        catch (BusinessRuleViolationException)
+        catch (Exception ex) when (ex is not BusinessRuleViolationException)
         {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error in CreateReservationAsync");
-            throw new BusinessRuleViolationException(
-                "An unexpected error occurred while processing your reservation.",
-                "UNEXPECTED_ERROR");
+            _logger.LogError(ex, "Unexpected error while creating reservation.");
+            throw new Exception("An unexpected error occurred while processing your reservation.");
         }
     }
-    public Task<Reservation> DeleteReservationAsync(Guid id)
+    public async Task<Reservation> CancelReservationAsync(Guid reservationId, Guid userId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var reservation = await _context.Reservations
+                                            .Include(u=>u.User)                                        
+                                            .FirstOrDefaultAsync(r => r.Id == reservationId);
+            if(reservation == null)
+            {
+                _logger.LogError("The reservation with {id} not found.", reservationId);
+                throw new BusinessRuleViolationException($"The reservation with {reservationId} not found.", "NOT_FOUND");
+            }
+            if (reservation.UserId != userId) 
+            {
+                _logger.LogError("User {UserId} is not authorized to cancel reservation {ReservationId}.", userId, reservationId);
+                throw new BusinessRuleViolationException("You are not authorized to cancel this reservation.", "UNAUTHORIZED_CANCEL");
+            }
+            await CompleteReservationAsync(reservationId);
+            reservation.ReservationStatus = ReservationStatus.Cancelled;
+
+            reservation.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return reservation;
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, $"There was a problem with {reservationId} cancellation.");
+            throw new Exception($"There was a problem with canceling {reservationId} reservation.");
+        }
     }
 
     public async Task<ReservationReadDto?> PickReservationByIdAsync(Guid reservationId, Guid currentUserId)
@@ -119,14 +135,14 @@ public class ReservationService : IReservationService
             if (reservation == null)
             {
                 _logger.LogWarning("Reservation with ID {ReservationId} not found", reservationId);
-                return null;
+                throw new BusinessRuleViolationException($"The reservation with {reservationId} id not found.", "RESERVATION_NOT_FOUND");
             }
 
 
             if (reservation.UserId != currentUserId)
             {
                 _logger.LogWarning("User {UserId} does not own reservation {ReservationId}", currentUserId, reservationId);
-                throw new BusinessRuleViolationException("User does not own this reservation","No_Reservation");
+                throw new BusinessRuleViolationException("User does not own this reservation.", "UNAUTHORIZED_PICKUP");
             }
 
  
@@ -134,18 +150,23 @@ public class ReservationService : IReservationService
             {
                 _logger.LogWarning("Reservation {ReservationId} is not active. Current status: {Status}",
                     reservationId, reservation.ReservationStatus);
-                throw new InvalidOperationException($"Cannot pickup reservation with status: {reservation.ReservationStatus}");
+                throw new BusinessRuleViolationException($"Cannot pickup reservation with status: {reservation.ReservationStatus}",
+                                                           "INVALID_RESERVATION_STATUS");
             }
 
             var book = await _context.Books.FirstOrDefaultAsync(b =>b.Id == reservation.BookId);
             if (book == null)
             {
-                throw new KeyNotFoundException($"Book with ID {reservation.BookId} not found");
+                throw new BusinessRuleViolationException(
+                    $"Book with ID {reservation.BookId} not found",
+                    "BOOK_NOT_FOUND");
             }
 
             if (!book.IsAvailableForPickUp)
             {
-                throw new BusinessRuleViolationException("Book is not available for loan","Not-For-Pickup");
+                throw new BusinessRuleViolationException(
+                    "Book is not available for loan",
+                    "BOOK_NOT_AVAILABLE");
             }
 
 
@@ -160,6 +181,7 @@ public class ReservationService : IReservationService
             };
 
             await CompleteReservationAsync(reservationId);
+            reservation.ReservationStatus = ReservationStatus.Fulfilled;
             reservation.UpdatedAt = DateTime.UtcNow;
             var updatedReservation = _context.Reservations.Update(reservation);
             _context.Loans.Add(loan);
@@ -172,21 +194,73 @@ public class ReservationService : IReservationService
             var reservationDto = _reservationMapper.ToReservationReadDto(updatedReservation.Entity);
             return reservationDto;
         }
+        catch (Exception ex) when (ex is not BusinessRuleViolationException)
+        {
+            _logger.LogError(ex, "Unexpected error picking up reservation {ReservationId}", reservationId);
+            throw new Exception("An error occurred while processing your pickup request", ex);
+        }
+    }
+
+    public async Task<PaginatedResponse<Reservation>> ListAllReservationAsync(QueryOptions queryOptions)
+    {
+        try
+        {
+            var query = _context
+                .Reservations
+                .Include(b => b.Book)
+                .Include(b => b.User)
+                .Where(r => r.ReservationStatus == ReservationStatus.Pending)
+                .AsQueryable();
+
+            // Apply sort
+            if (!string.IsNullOrWhiteSpace(queryOptions.SearchTerm))
+            {
+                var sortBy = queryOptions.OrderBy.Trim().ToLower();
+                query = query.ApplySorting(sortBy, queryOptions.IsDescending, "LoanDate");
+
+            }
+            //apply search
+            if (!string.IsNullOrWhiteSpace(queryOptions.SearchTerm))
+            {
+                var searchTerm = queryOptions.SearchTerm.Trim().ToLower();
+                query = query.Where(l => l.Book.Title.ToLower().Contains(searchTerm) ||
+                                         l.User.FirstName.ToLower().Contains(searchTerm) ||
+                                         l.User.LastName.ToLower().Contains(searchTerm));
+            }
+
+            var paginatedLoans = await PaginatedResponse<Reservation>.CreateAsync(query, queryOptions.PageNumber, queryOptions.PageSize);
+            return paginatedLoans;
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error picking up reservation {ReservationId}", reservationId);
+            _logger.LogError(ex, "Error listing reservations");
             throw;
         }
     }
 
-    public Task<PaginatedResponse<ReservationReadDto>> ListAllReservationAsync(QueryOptions queryOptions)
+    public async Task<IEnumerable<Reservation>> ListReservationForAUserAsync(Guid userId)
     {
-        throw new NotImplementedException();
-    }
+        try
+        {
+            var reservations = _context
+                .Reservations
+                .Include(b => b.Book)
+                .Where(r => r.UserId == userId)
+                .Where(r => r.ReservationStatus == ReservationStatus.Pending)
+                .AsQueryable();
+            if (reservations == null)
+            {
+                _logger.LogWarning("No reservations found for user {UserId}", userId);
+                throw new BusinessRuleViolationException("No reservations found for the user.", "NO_RESERVATIONS");
+            }
+            return reservations;
 
-    public Task<PaginatedResponse<ReservationReadDto>> ListReservationForAUserAsync()
-    {
-        throw new NotImplementedException();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error listing reservations for user {UserId}", userId);
+            throw new Exception("An error occurred while retrieving your reservations.");
+        }
     }
     private async Task ReorderReservationQueueAsync(Guid bookId)
     {
@@ -202,15 +276,13 @@ public class ReservationService : IReservationService
 
         await _context.SaveChangesAsync();
     }
-    public async Task CompleteReservationAsync(Guid reservationId)
+    private async Task CompleteReservationAsync(Guid reservationId)
     {
         var reservation = await _context.Reservations.FindAsync(reservationId);
         if (reservation == null)
             throw new KeyNotFoundException($"Reservation with ID {reservationId} not found.");
 
         int? oldPosition = reservation.QueuePosition;
-
-        reservation.ReservationStatus = ReservationStatus.Fulfilled;
 
         reservation.QueuePosition = 0; 
 

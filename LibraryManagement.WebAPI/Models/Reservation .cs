@@ -4,6 +4,7 @@ public class Reservation: BaseEntityWithId
 {
 
     public DateTime ReservedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? PickupDeadline { get; set; }
     public ReservationStatus ReservationStatus { get; set; } = ReservationStatus.Pending;
     public int QueuePosition { get; set; }
     public Guid BookId { get; set; }

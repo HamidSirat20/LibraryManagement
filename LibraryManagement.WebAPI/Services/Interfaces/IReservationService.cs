@@ -6,10 +6,10 @@ using LibraryManagement.WebAPI.Models.Dtos;
 namespace LibraryManagement.WebAPI.Services.Interfaces;
     public interface IReservationService
     {
-    Task<PaginatedResponse<ReservationReadDto>> ListAllReservationAsync(QueryOptions queryOptions);
-    Task<PaginatedResponse<ReservationReadDto>> ListReservationForAUserAsync();
+    Task<PaginatedResponse<Reservation?>> ListAllReservationAsync(QueryOptions queryOptions);
+    Task<IEnumerable<Reservation?>> ListReservationForAUserAsync(Guid userId);
     Task<ReservationReadDto?> PickReservationByIdAsync(Guid reservationId, Guid currentUserId);
     Task<ReservationReadDto?> CreateReservationAsync(Guid bookId,Guid userId);
-    Task<Reservation> DeleteReservationAsync(Guid id);
+    Task<Reservation> CancelReservationAsync(Guid reservationId, Guid userId);
     }
 

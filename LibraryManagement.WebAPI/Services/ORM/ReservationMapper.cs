@@ -17,6 +17,7 @@ public class ReservationMapper : IReservationMapper
             BookTitle = reservation.Book?.Title ?? "Unknown Book",
             UserId = reservation.UserId,
             ReservedAt = reservation.ReservedAt,
+            PickupDeadline = reservation.PickupDeadline,
             ReservationStatus = reservation.ReservationStatus,
             QueuePosition = reservation.QueuePosition
 
@@ -43,7 +44,8 @@ public class ReservationMapper : IReservationMapper
             ReservedAt = DateTime.UtcNow,
             ReservationStatus = ReservationStatus.Pending,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            PickupDeadline = null,
         };
     }
 

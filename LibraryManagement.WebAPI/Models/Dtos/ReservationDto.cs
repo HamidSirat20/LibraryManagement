@@ -16,6 +16,7 @@ public class ReservationReadDto
 
     [Required]
     public DateTime ReservedAt { get; set; }
+    public DateTime? PickupDeadline { get; set; }
 
     [Required]
     public ReservationStatus ReservationStatus { get; set; }

@@ -111,7 +111,7 @@ public class LoanService : ILoanService
         }
         catch
         {
-            throw new ArgumentNullException();
+            throw;
         }
     }
 
