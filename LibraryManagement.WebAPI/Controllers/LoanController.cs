@@ -10,15 +10,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
-    [Route("api/v{version:ApiVersion}/[controller]")]
-    [ApiController]
-    [ApiVersion("1.0")]
-    [Authorize]
+[Route("api/v{version:ApiVersion}/[controller]")]
+[ApiController]
+[ApiVersion("1.0")]
+[Authorize]
 public class LoanController : ControllerBase
-    {
-        private readonly ILogger<LoanController> _logger;
-        private readonly ILoanService _loanService;
-        private readonly ILoanMapper _loanMapper;
+{
+    private readonly ILogger<LoanController> _logger;
+    private readonly ILoanService _loanService;
+    private readonly ILoanMapper _loanMapper;
     private readonly ICurrentUserService _currentUserService;
     public LoanController(ILogger<LoanController> logger, ILoanService loanService, ILoanMapper loanMapper, ICurrentUserService currentUserService)
     {
@@ -36,7 +36,7 @@ public class LoanController : ControllerBase
             // Fetch current logged in user
             var userId = _currentUserService.UserId();
 
-            var loanDto = await _loanService.MakeLoanAsync(loanCreateDto,userId);
+            var loanDto = await _loanService.MakeLoanAsync(loanCreateDto, userId);
 
             _logger.LogInformation("Successfully created loan with ID: {LoanId}", loanDto.Id);
 
@@ -61,7 +61,7 @@ public class LoanController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> ListAllLoansAsync([FromQuery] QueryOptions queryOptions)
     {
-        var loans = await  _loanService.GetAllLoansAsync(queryOptions);
+        var loans = await _loanService.GetAllLoansAsync(queryOptions);
         if (!loans.Any())
         {
             _logger.LogInformation("No active loan found with the provided query options.");
@@ -82,7 +82,7 @@ public class LoanController : ControllerBase
         var loanDtos = loans.Select(loan => _loanMapper.ToLoanReadDto(loan)).ToList();
         return Ok(loanDtos);
     }
-    [HttpGet("{id}",Name ="GetLoanById")]
+    [HttpGet("{id}", Name = "GetLoanById")]
     public async Task<IActionResult> GetLoanById([FromRoute] Guid id)
     {
         try
@@ -153,7 +153,7 @@ public class LoanController : ControllerBase
             _logger.LogError("You need to log in in order to see you loans.");
             return Unauthorized("You need to log in in order to see you loans.");
         }
-        var loans = await _loanService.GetYourOwnLoansAsync(userId,includeReturnedLoans);
+        var loans = await _loanService.GetYourOwnLoansAsync(userId, includeReturnedLoans);
         if (!loans.Any())
         {
             _logger.LogInformation("No active loan found for the current user.");
@@ -164,7 +164,7 @@ public class LoanController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
-    public async Task<IActionResult> GetLoansByUserIdAsync([FromRoute] Guid userId,[FromQuery] bool includeReturnedLoans = false)
+    public async Task<IActionResult> GetLoansByUserIdAsync([FromRoute] Guid userId, [FromQuery] bool includeReturnedLoans = false)
     {
         var loans = await _loanService.GetYourOwnLoansAsync(userId, includeReturnedLoans);
         if (!loans.Any())

@@ -40,8 +40,7 @@ public  class UserMapper : IUserMapper
             membershipEndDate: DateTime.UtcNow.AddYears(1)
         )
         {
-            Password = userCreateDto.Password,
-            PublicId = userCreateDto.PublicId
+            Password = userCreateDto.Password
         };
     }
 
@@ -71,8 +70,7 @@ public  class UserMapper : IUserMapper
             Email = user.Email,
             Phone = user.Phone,
             Address = user.Address,
-            Password = string.Empty,
-            PublicId = user.PublicId
+            Password = string.Empty
         };
     }
 

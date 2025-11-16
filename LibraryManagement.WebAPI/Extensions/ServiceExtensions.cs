@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Converters;
+using System.Net;
+using System.Net.Mail;
 
 namespace LibraryManagement.WebAPI.Extensions
 {
@@ -89,7 +91,24 @@ namespace LibraryManagement.WebAPI.Extensions
             webApplication.Services.AddScoped<ICurrentUserService, CurrentUserService>();
             webApplication.Services.AddScoped<IReservationMapper, ReservationMapper>();
             webApplication.Services.AddScoped<IReservationService, ReservationService>();
+            webApplication.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+            webApplication.Services.AddScoped<IReservationQueueService, ReservationQueueService>();
+            webApplication.Services.AddTransient<IEmailService, EmailService>();
             webApplication.Services.AddHttpContextAccessor();
+
+
+            // Add Email service
+            webApplication.Services
+                                .AddFluentEmail(webApplication.Configuration["Email:Smtp:Username"])
+                                .AddSmtpSender(new SmtpClient(webApplication.Configuration["Email:Smtp:Host"])
+                                {
+                                    Port = int.Parse(webApplication.Configuration["Email:Smtp:Port"]),
+                                    Credentials = new NetworkCredential(
+                                        webApplication.Configuration["Email:Smtp:Username"],
+                                        webApplication.Configuration["Email:Smtp:Password"]
+                                    ),
+                                    EnableSsl = true
+                                });
 
 
             // Add DbContext

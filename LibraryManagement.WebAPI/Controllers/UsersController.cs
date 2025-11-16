@@ -46,7 +46,8 @@ public class UsersController : ControllerBase
         //    return StatusCode(StatusCodes.Status304NotModified);
         //}
         //Response.Headers["ETag"] = etag;
-        return Ok(user);
+        var userReadDto = _userMapper.ToReadDto(user);
+        return Ok(userReadDto);
     }
 
     [HttpDelete("{id}")]

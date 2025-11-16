@@ -18,7 +18,8 @@ namespace LibraryManagement.WebAPI.Models.Dtos
 
     public class UserUpdateDto : UserForManipulationDto
     {
-        public IFormFile? File { get; set; } 
+        public IFormFile? File { get; set; }
+        public string? PublicId { get; set; }
     }
 
     public class UserReadDto

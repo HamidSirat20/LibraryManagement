@@ -22,7 +22,7 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
     public bool IsAvailable => !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
                            && !Reservations.Any(r => r.ReservationStatus == ReservationStatus.Pending);
     public bool IsAvailableForPickUp=> !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
-                       && Reservations.Any(r => r.ReservationStatus == ReservationStatus.Pending);
+                       && Reservations.Any(r => r.ReservationStatus == ReservationStatus.Notified);
 
     [Required]
     public IList<BookAuthor> BookAuthors { get; set; } = new List<BookAuthor>();

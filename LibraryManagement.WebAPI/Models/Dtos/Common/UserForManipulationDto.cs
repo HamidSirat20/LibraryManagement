@@ -25,7 +25,6 @@ namespace LibraryManagement.WebAPI.Models.Dtos.Common
         [Required(ErrorMessage = "Address is required.")]
         [MaxLength(200, ErrorMessage = "Address cannot exceed 200 characters.")]
         public string Address { get; set; } = string.Empty;
-        public string? PublicId { get; set; }
 
     }
 }

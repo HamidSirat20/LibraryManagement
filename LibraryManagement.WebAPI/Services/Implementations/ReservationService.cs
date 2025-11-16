@@ -15,11 +15,17 @@ public class ReservationService : IReservationService
     private readonly LibraryDbContext _context;
     private readonly ILogger<ReservationService> _logger;
     private readonly IReservationMapper _reservationMapper;
-    public ReservationService(LibraryDbContext context, ILogger<ReservationService> logger, IReservationMapper reservationMapper)
+    private readonly IEmailService _emailService;
+    private readonly IEmailTemplateService _emailTemplateService;
+    private readonly IReservationQueueService _reservationQueueService;
+    public ReservationService(LibraryDbContext context, ILogger<ReservationService> logger, IReservationMapper reservationMapper, IEmailService emailService, IEmailTemplateService emailTemplateService, IReservationQueueService reservationQueueService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _reservationMapper = reservationMapper ?? throw new ArgumentNullException(nameof(reservationMapper));
+        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
+        _reservationQueueService = reservationQueueService ?? throw new ArgumentNullException(nameof(reservationQueueService));
     }
 
 
@@ -28,8 +34,8 @@ public class ReservationService : IReservationService
         try
         {
             var book = await _context.Books
-                            .Include(l=>l.Loans)
-                            .Include(r=>r.Reservations)
+                            .Include(l => l.Loans)
+                            .Include(r => r.Reservations)
                             .FirstOrDefaultAsync(b => b.Id == bookId);
             if (book == null)
             {
@@ -46,7 +52,7 @@ public class ReservationService : IReservationService
                                                          "BOOK_AVAILABLE");
             }
             // Check if the user already has an active reservation for the book
-            var existingReservation = await _context.Reservations                                            
+            var existingReservation = await _context.Reservations
                                          .FirstOrDefaultAsync(r => r.UserId == userId &&
                                                                    r.BookId == bookId &&
                                                                    (r.ReservationStatus == ReservationStatus.Pending ||
@@ -81,14 +87,24 @@ public class ReservationService : IReservationService
 
             var reservationReadDto = _reservationMapper.ToReservationReadDto(reservation);
 
+            var newReservation = await _context.Reservations
+          .Include(r => r.User)
+          .Include(r => r.Book)
+          .FirstOrDefaultAsync(r => r.Id == reservation.Id);
+
+            // build email body
+            var reservationCreatedAt = reservation.CreatedAt ?? DateTime.Now;
+            var body = _emailTemplateService.GetReservationConfirmationTemplate(newReservation.User.FullName, newReservation.User.LastName, newReservation.Book.Title
+                , reservationCreatedAt, newReservation.QueuePosition);
+            await _emailService.SendEmailAsync(reservation.User.Email, "Reservation Created", body);
 
             _logger.LogInformation("Reservation created for Book {BookId} by User {UserId}.", bookId, userId);
             return reservationReadDto;
         }
-        catch(DbUpdateException ex)
+        catch (DbUpdateException ex)
         {
-            _logger.LogError(ex.Message,"There was some mistake while making a reservation.");
-            throw new DbUpdateException( "A system error occurred while creating the reservation. Please try again.");
+            _logger.LogError(ex.Message, "There was some mistake while making a reservation.");
+            throw new DbUpdateException("A system error occurred while creating the reservation. Please try again.");
         }
         catch (Exception ex) when (ex is not BusinessRuleViolationException)
         {
@@ -101,26 +117,28 @@ public class ReservationService : IReservationService
         try
         {
             var reservation = await _context.Reservations
-                                            .Include(u=>u.User)                                        
+                                            .Include(u => u.User)
                                             .FirstOrDefaultAsync(r => r.Id == reservationId);
-            if(reservation == null)
+            if (reservation == null)
             {
                 _logger.LogError("The reservation with {id} not found.", reservationId);
                 throw new BusinessRuleViolationException($"The reservation with {reservationId} not found.", "NOT_FOUND");
             }
-            if (reservation.UserId != userId) 
+            if (reservation.UserId != userId)
             {
                 _logger.LogError("User {UserId} is not authorized to cancel reservation {ReservationId}.", userId, reservationId);
                 throw new BusinessRuleViolationException("You are not authorized to cancel this reservation.", "UNAUTHORIZED_CANCEL");
             }
-            await CompleteReservationAsync(reservationId);
-            reservation.ReservationStatus = ReservationStatus.Cancelled;
 
+            // reorder the queue after cancellation
+            await CompleteReservationAsync(reservationId);
+
+            reservation.ReservationStatus = ReservationStatus.Cancelled;
             reservation.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return reservation;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, $"There was a problem with {reservationId} cancellation.");
             throw new Exception($"There was a problem with canceling {reservationId} reservation.");
@@ -131,7 +149,7 @@ public class ReservationService : IReservationService
     {
         try
         {
-            var reservation = await _context.Reservations.Include(u=>u.User).FirstOrDefaultAsync(r=>r.Id == reservationId);
+            var reservation = await _context.Reservations.Include(u => u.User).FirstOrDefaultAsync(r => r.Id == reservationId);
             if (reservation == null)
             {
                 _logger.LogWarning("Reservation with ID {ReservationId} not found", reservationId);
@@ -145,8 +163,8 @@ public class ReservationService : IReservationService
                 throw new BusinessRuleViolationException("User does not own this reservation.", "UNAUTHORIZED_PICKUP");
             }
 
- 
-            if (reservation.ReservationStatus != ReservationStatus.Pending)
+
+            if (reservation.ReservationStatus != ReservationStatus.Pending && reservation.ReservationStatus != ReservationStatus.Notified)
             {
                 _logger.LogWarning("Reservation {ReservationId} is not active. Current status: {Status}",
                     reservationId, reservation.ReservationStatus);
@@ -154,7 +172,7 @@ public class ReservationService : IReservationService
                                                            "INVALID_RESERVATION_STATUS");
             }
 
-            var book = await _context.Books.FirstOrDefaultAsync(b =>b.Id == reservation.BookId);
+            var book = await _context.Books.FirstOrDefaultAsync(b => b.Id == reservation.BookId);
             if (book == null)
             {
                 throw new BusinessRuleViolationException(
@@ -180,7 +198,7 @@ public class ReservationService : IReservationService
                 LoanStatus = LoanStatus.Active
             };
 
-            await CompleteReservationAsync(reservationId);
+            // await CompleteReservationAsync(reservationId);
             reservation.ReservationStatus = ReservationStatus.Fulfilled;
             reservation.UpdatedAt = DateTime.UtcNow;
             var updatedReservation = _context.Reservations.Update(reservation);
@@ -284,7 +302,7 @@ public class ReservationService : IReservationService
 
         int? oldPosition = reservation.QueuePosition;
 
-        reservation.QueuePosition = 0; 
+        reservation.QueuePosition = 0;
 
         await _context.SaveChangesAsync();
 

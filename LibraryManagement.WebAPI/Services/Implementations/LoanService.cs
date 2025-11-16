@@ -14,11 +14,15 @@ public class LoanService : ILoanService
     private readonly LibraryDbContext _context;
     private readonly ILoanMapper _mapper;
     private readonly ILogger<LoanService> _logger;
-    public LoanService(LibraryDbContext context, ILoanMapper mapper, ILogger<LoanService> logger, IHttpContextAccessor httpContextAccessor)
+    private readonly IEmailTemplateService _emailTemplateService;
+    private readonly IReservationQueueService _reservationQueueService;
+    public LoanService(LibraryDbContext context, ILoanMapper mapper, ILogger<LoanService> logger, IHttpContextAccessor httpContextAccessor, IEmailTemplateService emailTemplateService, IReservationQueueService reservationQueueService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
+        _reservationQueueService = reservationQueueService ?? throw new ArgumentNullException(nameof(reservationQueueService));
     }
 
     public async Task<LoanReadDto> MakeLoanAsync(LoanCreateDto loanCreateDto, Guid userId)
@@ -85,7 +89,8 @@ public class LoanService : ILoanService
                 return userLoans;
             }
         }
-        catch {
+        catch
+        {
             throw new ArgumentNullException();
         }
     }
@@ -124,13 +129,13 @@ public class LoanService : ILoanService
                             .Include(l => l.User)
                             .AsNoTracking()
                             .AsQueryable();
-            
+
             // Apply sort
             if (!string.IsNullOrWhiteSpace(queryOptions.SearchTerm))
             {
                 var sortBy = queryOptions.OrderBy.Trim().ToLower();
                 query = query.ApplySorting(sortBy, queryOptions.IsDescending, "LoanDate");
-                
+
             }
             //apply search
             if (!string.IsNullOrWhiteSpace(queryOptions.SearchTerm))
@@ -157,20 +162,20 @@ public class LoanService : ILoanService
     {
         try
         {
-            var loan = await _context.Loans.Include(u=>u.User)
-                                            .Include(r=>r.Book)
+            var loan = await _context.Loans.Include(u => u.User)
+                                            .Include(r => r.Book)
                                             .FirstOrDefaultAsync(l => l.Id == loanId);
             if (loan == null)
             {
                 _logger.LogWarning("Loan with {loan.Id} does not exist!", loanId);
-                throw new BusinessRuleViolationException($"Book with {loanId} not found","Not_Found");
+                throw new BusinessRuleViolationException($"Book with {loanId} not found", "Not_Found");
             }
-            _logger.LogInformation("Loan with Id {loan.Id} returned!",loan.Id);
+            _logger.LogInformation("Loan with Id {loan.Id} returned!", loan.Id);
             return loan;
         }
-        catch(Exception ex) 
+        catch (Exception ex)
         {
-            throw new Exception(ex.Message); 
+            throw new Exception(ex.Message);
         }
     }
 
@@ -185,7 +190,7 @@ public class LoanService : ILoanService
         if (!overdueLoans.Any())
         {
             _logger.LogInformation("No overdue loans found at {Time}.", DateTime.UtcNow);
-            return Enumerable.Empty<Loan>(); 
+            return Enumerable.Empty<Loan>();
         }
 
         _logger.LogInformation("Retrieved {Count} overdue loans.", overdueLoans.Count);
@@ -208,11 +213,26 @@ public class LoanService : ILoanService
             returnLoan.CalculateLateFee();
             await _context.SaveChangesAsync();
             _logger.LogInformation("Loan with id {loanId} returned.", loanId);
+
+            // 3. Find the next reservation in queue for this book
+            var nextReservation = await _context.Reservations
+                .Include(r => r.User)
+                .Include(r => r.Book)
+                .Where(r => r.BookId == returnLoan.BookId &&
+                           r.ReservationStatus == ReservationStatus.Pending)
+                .OrderBy(r => r.QueuePosition)
+                .FirstOrDefaultAsync();
+            //send email notificatoin to user
+            var emailBody = _emailTemplateService.GetReservationReadyTemplate(nextReservation.User.FirstName, nextReservation.User.LastName,
+                nextReservation.Book.Title, DateTime.Now.AddDays(3));
+            await _reservationQueueService.ProcessNextReservationAfterReturnAsync(nextReservation.BookId, "Your reservation is ready for pickup.", emailBody);
+
+
             return returnLoan;
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
-           throw new Exception(ex.Message, ex);
+            throw new Exception(ex.Message, ex);
         }
     }
 
@@ -232,8 +252,8 @@ public class LoanService : ILoanService
                                         r.ReservationStatus == ReservationStatus.Notified);
             if (hasActiveReservation)
             {
-                _logger.LogWarning("Loan with {loan.Id} does not exist!",loanToUpdate.Id);
-                throw new Exception("You can not extend this book since it is reserved by someone.");           
+                _logger.LogWarning("Loan with {loan.Id} does not exist!", loanToUpdate.Id);
+                throw new Exception("You can not extend this book since it is reserved by someone.");
             }
             loanToUpdate.DueDate = loanToUpdate.DueDate.AddDays(30);
             await _context.SaveChangesAsync();
