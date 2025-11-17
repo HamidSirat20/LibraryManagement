@@ -1,6 +1,6 @@
 ﻿namespace LibraryManagement.WebAPI.Models.Common;
-    public class PaginationMetadata
-    {
+public class PaginationMetadata
+{
     public int ItemCount { get; set; }
     public int PageCount { get; set; }
     public int PageSize { get; set; }
@@ -10,7 +10,7 @@
         ItemCount = itemCount;
         PageSize = pageSize;
         CurrentPage = currentPage;
-        PageCount = (int) Math.Ceiling(ItemCount /(double)PageSize);
+        PageCount = (int)Math.Ceiling(ItemCount / (double)PageSize);
     }
-    }
+}
 

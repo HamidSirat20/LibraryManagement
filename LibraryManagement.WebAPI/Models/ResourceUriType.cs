@@ -1,9 +1,7 @@
-﻿namespace LibraryManagement.WebAPI.Models
+﻿namespace LibraryManagement.WebAPI.Models;
+public enum ResourceUriType
 {
-    public enum ResourceUriType
-    {
-      PreviousPage,
-      NextPage,
-      Current
-    }
+    PreviousPage,
+    NextPage,
+    Current
 }

@@ -8,88 +8,88 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace LibraryManagement.WebAPI.Controllers
+namespace LibraryManagement.WebAPI.Controllers;
+
+[Route("api/v{version:ApiVersion}/[controller]")]
+[ApiVersion("1.0")]
+[ApiController]
+public class AuthController : ControllerBase
 {
-    [Route("api/v{version:ApiVersion}/[controller]")]
-    [ApiVersion("1.0")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    private readonly IUsersService _userService;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthController> _logger;
+
+    public AuthController(IUsersService userService, IConfiguration configuration, ILogger<AuthController> logger
+        )
     {
-        private readonly IUserService _userService;
-        private readonly IConfiguration _configuration;
-        private readonly ILogger<AuthController> _logger;
-
-        public AuthController(IUserService userService, IConfiguration configuration,ILogger<AuthController> logger
-            )
+        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+    [HttpPost()]
+    public async Task<ActionResult<string>> Authenticate(LoginDto loginDto)
+    {
+        var loginUser = await ValidateUser(loginDto);
+        if (loginUser is null)
         {
-            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            return Unauthorized();
         }
-        [HttpPost()]
-        public async Task<ActionResult<string>> Authenticate(LoginDto loginDto)
+        _logger.LogInformation($"User ID: {loginUser.Id}, Type: {loginUser.Id.GetType()}");
+
+        //create a token
+        var securityKey = new SymmetricSecurityKey(Encoding.Unicode.GetBytes(_configuration["Authentication:secretKey"]));
+        var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        //claims
+        var claimsForToken = new List<Claim>();
+        claimsForToken.Add(new Claim("sub", loginUser.Id.ToString()));
+        claimsForToken.Add(new Claim("given_name", loginUser.FirstName));
+        claimsForToken.Add(new Claim("family_name", loginUser.LastName));
+        claimsForToken.Add(new Claim("email", loginUser.Email));
+        claimsForToken.Add(new Claim("role", loginUser.Role.ToString()));
+
+        //jwt 
+        var jwtSecurityToken = new JwtSecurityToken(
+            issuer: _configuration["Authentication:Issuer"],
+            audience: _configuration["Authentication:Audience"],
+            claims: claimsForToken,
+            notBefore: DateTime.UtcNow,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: signingCredentials
+            );
+
+
+        var tokenToReturn = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+        return Ok(tokenToReturn);
+    }
+    private async Task<UserValidateDto> ValidateUser(LoginDto loginDto)
+    {
+        var user = await _userService.GetByEmailAsync(loginDto.Email);
+        if (user == null)
         {
-            var loginUser =await ValidateUser(loginDto);
-            if (loginUser is null)
-            {
-                return Unauthorized();
-            }
-            _logger.LogInformation($"User ID: {loginUser.Id}, Type: {loginUser.Id.GetType()}");
-
-            //create a token
-            var securityKey =new SymmetricSecurityKey(Encoding.Unicode.GetBytes(_configuration["Authentication:secretKey"]));
-            var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            //claims
-            var claimsForToken = new List<Claim>();
-            claimsForToken.Add(new Claim("sub", loginUser.Id.ToString()));
-            claimsForToken.Add(new Claim("given_name", loginUser.FirstName ));
-            claimsForToken.Add(new Claim("family_name", loginUser.LastName));
-            claimsForToken.Add(new Claim("email", loginUser.Email));
-            claimsForToken.Add(new Claim("role", loginUser.Role.ToString())); 
-
-            //jwt 
-            var jwtSecurityToken  = new JwtSecurityToken(
-                issuer: _configuration["Authentication:Issuer"],
-                audience: _configuration["Authentication:Audience"],
-                claims: claimsForToken,
-                notBefore: DateTime.UtcNow,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: signingCredentials
-                );
-
-
-             var tokenToReturn = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
-            return Ok(tokenToReturn);
+            _logger.LogWarning("Authentication failed for email: {Email}. User not found.", loginDto.Email);
+            return null;
         }
-        private async Task< UserValidateDto> ValidateUser(LoginDto loginDto)
+        return new UserValidateDto
         {
-            var user = await _userService.GetByEmailAsync(loginDto.Email);
-            if (user == null)
-            {
-                _logger.LogWarning("Authentication failed for email: {Email}. User not found.", loginDto.Email);
-                return null;
-            }
-            return new UserValidateDto
-                {
-                    Id = user.Id,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email,
-                    Role = user.Role
-            };
-        }
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Role = user.Role
+        };
+    }
 
 
-        private class UserValidateDto
-        {
-            public Guid Id { get; set; }
-            public string FirstName { get; set; }
-            public string LastName { get; set; }
-            public string Email { get; set; }
-            public UserRole Role { get; set; }
-
-        }
+    private class UserValidateDto
+    {
+        public Guid Id { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Email { get; set; }
+        public UserRole Role { get; set; }
 
     }
+
 }
+

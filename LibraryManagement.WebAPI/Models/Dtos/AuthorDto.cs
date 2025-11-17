@@ -18,7 +18,7 @@ public class AuthorReadDto
     public int BookCount { get; set; }
 }
 public class AuthorCreateDto
-    {
+{
 
     [Required]
     [MaxLength(30, ErrorMessage = "First name cannot be longer than 30 characters.")]

@@ -1,9 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LibraryManagement.WebAPI.Models;
 
-public class Author: BaseEntityWithId, IComparable<Author>, IEquatable<Author>
+public class Author : BaseEntityWithId, IComparable<Author>, IEquatable<Author>
 {
     [Required]
     [MaxLength(30, ErrorMessage = "First name cannot be longer than 100 characters.")]

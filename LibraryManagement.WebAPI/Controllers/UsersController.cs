@@ -1,5 +1,4 @@
 ﻿using Asp.Versioning;
-using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
@@ -14,10 +13,10 @@ namespace LibraryManagement.WebAPI.Controllers;
 [ApiVersion("1.0")]
 public class UsersController : ControllerBase
 {
-    private readonly IUserService _userService;
-    private readonly IUserMapper _userMapper;
+    private readonly IUsersService _userService;
+    private readonly IUsersMapper _userMapper;
 
-    public UsersController( IUserService userService,IUserMapper userMapper)
+    public UsersController(IUsersService userService, IUsersMapper userMapper)
     {
         _userService = userService ?? throw new ArgumentNullException(nameof(userService));
         _userMapper = userMapper ?? throw new ArgumentNullException(nameof(userMapper));
@@ -27,14 +26,14 @@ public class UsersController : ControllerBase
     //[Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> ListALLUsers()
     {
-       var users = await _userService.ListAllUsersAsync();
+        var users = await _userService.ListAllUsersAsync();
         return Ok(users);
     }
-    [HttpGet("{id}",Name = "GetOneUser")]
+    [HttpGet("{id}", Name = "GetOneUser")]
     public async Task<IActionResult> GetOneUser(Guid id)
     {
         var user = await _userService.GetByIdAsync(id);
-        if(user == null)
+        if (user == null)
         {
             return NotFound();
         }
@@ -55,7 +54,7 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> DeleteOneUser(Guid id)
     {
         var exists = await _userService.EntityExistAsync(id);
-        if(!exists)
+        if (!exists)
         {
             return NotFound();
         }
@@ -66,11 +65,11 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateOneUser([FromForm] UserCreateDto userCreateDto)
     {
-        if(userCreateDto == null)
+        if (userCreateDto == null)
         {
             return BadRequest("User data is null");
         }
-  
+
         var createdUser = await _userService.CreateUserAsync(userCreateDto);
 
         if (!ModelState.IsValid)

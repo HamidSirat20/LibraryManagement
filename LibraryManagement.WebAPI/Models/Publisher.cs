@@ -11,7 +11,7 @@ public class Publisher : BaseEntityWithId
 
     public Publisher() { }
 
-    public Publisher( string name, string address, string website, string email)
+    public Publisher(string name, string address, string website, string email)
     {
         Name = name;
         Address = address;

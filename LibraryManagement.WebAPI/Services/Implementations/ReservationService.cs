@@ -14,11 +14,11 @@ public class ReservationService : IReservationService
 {
     private readonly LibraryDbContext _context;
     private readonly ILogger<ReservationService> _logger;
-    private readonly IReservationMapper _reservationMapper;
+    private readonly IReservationsMapper _reservationMapper;
     private readonly IEmailService _emailService;
-    private readonly IEmailTemplateService _emailTemplateService;
-    private readonly IReservationQueueService _reservationQueueService;
-    public ReservationService(LibraryDbContext context, ILogger<ReservationService> logger, IReservationMapper reservationMapper, IEmailService emailService, IEmailTemplateService emailTemplateService, IReservationQueueService reservationQueueService)
+    private readonly IEmailsTemplateService _emailTemplateService;
+    private readonly IReservationsQueueService _reservationQueueService;
+    public ReservationService(LibraryDbContext context, ILogger<ReservationService> logger, IReservationsMapper reservationMapper, IEmailService emailService, IEmailsTemplateService emailTemplateService, IReservationsQueueService reservationQueueService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -40,9 +40,8 @@ public class ReservationService : IReservationService
             if (book == null)
             {
                 _logger.LogError("The book was not found for reservation!");
-                throw new BusinessRuleViolationException(
-                                                       $"Book with this {bookId} id not found.",
-                                                       "BOOK_NOT_FOUND");
+                throw new BusinessRuleViolationException($"Book with this {bookId} id not found.",
+                                                         "BOOK_NOT_FOUND");
             }
             // Check if the book is available for reservation
             if (book.IsAvailable)

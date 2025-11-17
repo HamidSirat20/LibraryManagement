@@ -25,10 +25,10 @@ public class InMemoryLibraryDbContext : LibraryDbContext
 
 public class BookServiceTests
 {
-    private readonly Mock<IBookMapper> _mockMapper;
+    private readonly Mock<IBooksMapper> _mockMapper;
     private readonly Mock<IImageService> _mockImageService;
     private readonly InMemoryLibraryDbContext _context;
-    private readonly BookService _bookService;
+    private readonly BooksService _bookService;
 
     public BookServiceTests()
     {
@@ -38,17 +38,17 @@ public class BookServiceTests
 
         _context = new InMemoryLibraryDbContext(options);
 
-        _mockMapper = new Mock<IBookMapper>();
+        _mockMapper = new Mock<IBooksMapper>();
         _mockImageService = new Mock<IImageService>();
 
-        _bookService = new BookService(_context, _mockMapper.Object, _mockImageService.Object);
+        _bookService = new BooksService(_context, _mockMapper.Object, _mockImageService.Object);
     }
 
     [Fact]
     public async Task CreateBookAsync_Should_Add_Book_To_Database_And_Upload_Image()
     {
         // Arrange
-        var bookCreateDto = new BookCreateDto
+        var bookCreateDto = new BookDto
         {
             Title = "Divan of Hafez",
             Description = "A collection of poems by the 14th-century Persian poet Hafez.",
@@ -89,7 +89,7 @@ public class BookServiceTests
         Assert.Single(_context.Books);
         Assert.Equal("Divan of Hafez", _context.Books.First().Title);
 
-        _mockMapper.Verify(m => m.ToBook(It.IsAny<BookCreateDto>()), Times.Once);
+        _mockMapper.Verify(m => m.ToBook(It.IsAny<BookDto>()), Times.Once);
         _mockImageService.Verify(i => i.AddImageAsync(It.IsAny<IFormFile>()), Times.Once);
     }
 
@@ -98,7 +98,7 @@ public class BookServiceTests
     public async Task CreateBookAsync_Should_Throw_Exception_When_Image_Upload_Fails()
     {
         // Arrange
-        var bookCreateDto = new BookCreateDto
+        var bookCreateDto = new BookDto
         {
             Title = "Divan of Hafez",
             Description = "A collection of poems by the 14th-century Persian poet Hafez.",

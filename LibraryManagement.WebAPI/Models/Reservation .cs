@@ -1,6 +1,6 @@
 namespace LibraryManagement.WebAPI.Models;
 
-public class Reservation: BaseEntityWithId
+public class Reservation : BaseEntityWithId
 {
 
     public DateTime ReservedAt { get; set; } = DateTime.UtcNow;
@@ -13,7 +13,7 @@ public class Reservation: BaseEntityWithId
     public User User { get; set; } = default!;
     public Reservation()
     {
-        
+
     }
     public Reservation(Guid id, Guid bookId, Guid userId, DateTime reservedAt, ReservationStatus status = ReservationStatus.Pending)
     {

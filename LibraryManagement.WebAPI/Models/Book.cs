@@ -21,7 +21,7 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
 
     public bool IsAvailable => !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
                            && !Reservations.Any(r => r.ReservationStatus == ReservationStatus.Pending);
-    public bool IsAvailableForPickUp=> !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
+    public bool IsAvailableForPickUp => !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
                        && Reservations.Any(r => r.ReservationStatus == ReservationStatus.Notified);
 
     [Required]
@@ -33,22 +33,22 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
 
     public Book()
     {
-        
+
     }
-    public Book( string title, string description,DateTime publishedDate, Genre genre, int pages)
+    public Book(string title, string description, DateTime publishedDate, Genre genre, int pages)
     {
         Title = title;
-        Description = description;  
+        Description = description;
         PublishedDate = publishedDate;
         Genre = genre;
         Pages = pages;
-        
+
     }
 
-    public int CompareTo(Book? other)=>string.Compare(Title, other?.Title ,StringComparison.OrdinalIgnoreCase);
+    public int CompareTo(Book? other) => string.Compare(Title, other?.Title, StringComparison.OrdinalIgnoreCase);
 
 
-    public bool Equals(Book? other)=>
+    public bool Equals(Book? other) =>
         other != null &&
         Title == other.Title &&
         Description == other.Description &&

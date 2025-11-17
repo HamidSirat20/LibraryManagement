@@ -20,7 +20,7 @@ public static class ShapeSelector
         if (string.IsNullOrWhiteSpace(fields))
         {
             var propertyInfos = typeof(TSource)
-                .GetProperties(BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance );
+                .GetProperties(BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
             propertyInfoList.AddRange(propertyInfos);
         }
         else

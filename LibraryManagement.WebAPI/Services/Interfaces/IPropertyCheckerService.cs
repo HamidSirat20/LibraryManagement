@@ -1,7 +1,5 @@
-﻿namespace LibraryManagement.WebAPI.Services.Interfaces
+﻿namespace LibraryManagement.WebAPI.Services.Interfaces;
+public interface IPropertyCheckerService
 {
-    public interface IPropertyCheckerService
-    {
-        bool TypeHasProperties<T>(string? fields);
-    }
+    bool TypeHasProperties<T>(string? fields);
 }

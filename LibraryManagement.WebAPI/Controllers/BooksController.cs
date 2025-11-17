@@ -29,12 +29,12 @@ namespace LibraryManagement.WebAPI.Controllers;
 public class BooksController : ControllerBase
 {
     private readonly ILogger<BooksController> _logger;
-    private readonly IBookService _bookService;
-    private readonly IBookMapper _bookMapper;
+    private readonly IBooksService _bookService;
+    private readonly IBooksMapper _bookMapper;
     private readonly IPropertyCheckerService _propertyCheckerService;
     private readonly ProblemDetailsFactory _problemDetailsFactory;
 
-    public BooksController(ILogger<BooksController> logger, IBookService bookService, IBookMapper bookMapper, IPropertyCheckerService propertyCheckerService, ProblemDetailsFactory problemDetailsFactory)
+    public BooksController(ILogger<BooksController> logger, IBooksService bookService, IBooksMapper bookMapper, IPropertyCheckerService propertyCheckerService, ProblemDetailsFactory problemDetailsFactory)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _bookService = bookService ?? throw new ArgumentNullException(nameof(bookService));
@@ -47,7 +47,7 @@ public class BooksController : ControllerBase
     [RequestHeaderMatchesMediaTypeAttribute("Accept",
           "application/vnd.hamid.hateoas+json")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpGet(Name ="GetAllBooks")]
+    [HttpGet(Name = "GetAllBooks")]
     public async Task<IActionResult> ListAllBooksWithLinks([FromQuery] QueryOptions queryOptions)
     {
         var books = await _bookService.ListAllBooksAsync(queryOptions);
@@ -59,7 +59,7 @@ public class BooksController : ControllerBase
                 statusCode: 400,
                 title: "Bad request",
                 detail: $"The fields {queryOptions.Fields} are invalid."));
-                
+
         }
 
         // var paginationMetadata 
@@ -183,7 +183,7 @@ public class BooksController : ControllerBase
     [RequestHeaderMatchesMediaTypeAttribute("Accept",
            "application/vnd.hamid.hateoas+json")]
     [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpGet("{id}",Name ="GetBook")]
+    [HttpGet("{id}", Name = "GetBook")]
     public async Task<IActionResult> GetBookByIdWithLinks(Guid id, string? fields, [FromQuery] bool includePublisher = false)
     {
         var book = await _bookService.GetByIdAsync(id, includePublisher);
@@ -195,7 +195,7 @@ public class BooksController : ControllerBase
 
         if (includePublisher)
         {
-            var bookDto =_bookMapper.ToBookWithPublisherDto(book);
+            var bookDto = _bookMapper.ToBookWithPublisherDto(book);
             return Ok(bookDto);
         }
 
@@ -207,16 +207,16 @@ public class BooksController : ControllerBase
                 title: "Bad request",
                 detail: $"The fields {fields} are invalid."));
         }
-   
-            var links = CreateLinksForBook(id, fields);
-            var bookDict = _bookMapper.ToBookWithoutPublisherDto(book).ShapeField(fields) as IDictionary<string, object>;
-            bookDict.Add("links", links);
-            return Ok(bookDict);     
+
+        var links = CreateLinksForBook(id, fields);
+        var bookDict = _bookMapper.ToBookWithoutPublisherDto(book).ShapeField(fields) as IDictionary<string, object>;
+        bookDict.Add("links", links);
+        return Ok(bookDict);
     }
 
     [Produces("application/json", "application/xml")]
     [RequestHeaderMatchesMediaTypeAttribute("Accept",
-          "application/json","application/xml")]
+          "application/json", "application/xml")]
     [HttpGet("{id}", Name = "GetBook")]
     public async Task<IActionResult> GetBookById(Guid id, string? fields, [FromQuery] bool includePublisher = false)
     {
@@ -241,10 +241,10 @@ public class BooksController : ControllerBase
                 title: "Bad request",
                 detail: $"The fields {fields} are invalid."));
         }
-    
-            var bookReturnDto = _bookMapper.ToBookWithoutPublisherDto(book).ShapeField(fields);
-            return Ok(bookReturnDto);
-        
+
+        var bookReturnDto = _bookMapper.ToBookWithoutPublisherDto(book).ShapeField(fields);
+        return Ok(bookReturnDto);
+
     }
 
     private IEnumerable<LinkDto> CreateLinksForBook(Guid id, string? fields)
@@ -283,9 +283,9 @@ public class BooksController : ControllerBase
         return links;
     }
 
-    [HttpPost(Name ="CreateBook")]
-   /// [Authorize(Policy = "AdminCanAccess")]
-    public async Task<IActionResult> CreateBook([FromForm] BookCreateDto bookCreateDto)
+    [HttpPost(Name = "CreateBook")]
+    /// [Authorize(Policy = "AdminCanAccess")]
+    public async Task<IActionResult> CreateBook([FromForm] BookDto bookCreateDto)
     {
         if (bookCreateDto == null)
         {
@@ -303,20 +303,20 @@ public class BooksController : ControllerBase
 
         var bookToReturn = _bookMapper.ToBookReadDto(createdBook).ShapeField(null) as IDictionary<string, object?>;
         bookToReturn.Add("links", links);
-        return CreatedAtRoute("GetBook", new { id = bookToReturn["Id"], includePublisher=false }, bookToReturn);
+        return CreatedAtRoute("GetBook", new { id = bookToReturn["Id"], includePublisher = false }, bookToReturn);
     }
 
-    [HttpDelete("{id}",Name ="DeleteBook")]
+    [HttpDelete("{id}", Name = "DeleteBook")]
     [Authorize(Policy = "AdminCanAccess")]
-    public async Task<IActionResult>  DeleteBookById (Guid id)
+    public async Task<IActionResult> DeleteBookById(Guid id)
     {
-        if(! await _bookService.EntityExistAsync(id))
+        if (!await _bookService.EntityExistsAsync(id))
         {
             _logger.LogDebug("Book with id: {id} was not found", id);
             return NotFound();
         }
         var result = await _bookService.DeleteBookByIdAsync(id);
-        if(result == null || result == false)
+        if (result == null || result == false)
         {
             _logger.LogError("Something went wrong while deleting the book with id: {id}", id);
             return StatusCode(500, "A problem happened while handling your request.");
@@ -324,7 +324,7 @@ public class BooksController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("{id}",Name ="UpdateBook")]
+    [HttpPut("{id}", Name = "UpdateBook")]
     [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> UpdateBook(Guid id, [FromBody] BookUpdateDto bookUpdateDto)
     {
@@ -341,7 +341,7 @@ public class BooksController : ControllerBase
         try
         {
             var updatedBook = await _bookService.UpdateBookAsync(id, bookUpdateDto);
-            return NoContent(); 
+            return NoContent();
         }
         catch (ArgumentException)
         {
@@ -350,8 +350,8 @@ public class BooksController : ControllerBase
     }
 
 
-    [HttpPatch("{id}",Name = "PartiallyUpdateBook")]
-   // [Authorize(Policy = "AdminCanAccess")]
+    [HttpPatch("{id}", Name = "PartiallyUpdateBook")]
+    // [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> PartiallyUpdateBookAsync(Guid id, [FromBody] JsonPatchDocument<BookUpdateDto> patchDocument)
     {
         var existingBook = await _bookService.GetByIdAsync(id);
@@ -362,10 +362,10 @@ public class BooksController : ControllerBase
             return NotFound();
         }
 
-        var bookToPatchDto = _bookMapper.ToBookUpdateDto( existingBook);
+        var bookToPatchDto = _bookMapper.ToBookUpdateDto(existingBook);
         patchDocument.ApplyTo(bookToPatchDto, ModelState);
 
-        if(!TryValidateModel(bookToPatchDto))
+        if (!TryValidateModel(bookToPatchDto))
         {
             return ValidationProblem(ModelState);
         }
@@ -381,7 +381,7 @@ public class BooksController : ControllerBase
             return UnprocessableEntity(ModelState);
         }
 
-      var bookForUpdate = _bookMapper.UpdateFromDto(existingBook, bookToPatchDto);
+        var bookForUpdate = _bookMapper.UpdateFromDto(existingBook, bookToPatchDto);
         await _bookService.PartiallyUpdateBookAsync(bookForUpdate);
         return NoContent();
     }

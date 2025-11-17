@@ -4,7 +4,7 @@ namespace LibraryManagement.WebAPI.Models.Dtos;
 public class LoanCreateDto
 {
     [Required]
-    public Guid BookId { get; set; }  
+    public Guid BookId { get; set; }
 }
 public class LoanUpdateDto
 {

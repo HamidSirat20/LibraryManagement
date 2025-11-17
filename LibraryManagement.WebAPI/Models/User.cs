@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LibraryManagement.WebAPI.Models;
 
-public class User: BaseEntityWithId
+public class User : BaseEntityWithId
 {
     public string FirstName { get; set; }
     public string LastName { get; set; }
@@ -25,7 +25,7 @@ public class User: BaseEntityWithId
     public List<LateReturnOrLostFee> LateReturnOrLostFees { get; set; } = new();
     public User() { }
 
-    public User(string fName, string lName,string email, string phone, string address, DateTime membershipStartDate, DateTime membershipEndDate)
+    public User(string fName, string lName, string email, string phone, string address, DateTime membershipStartDate, DateTime membershipEndDate)
     {
         FirstName = fName;
         LastName = lName;
