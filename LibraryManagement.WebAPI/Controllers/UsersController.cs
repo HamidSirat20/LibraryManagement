@@ -1,9 +1,12 @@
 ﻿using Asp.Versioning;
+using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
+using static LibraryManagement.WebAPI.Helpers.ApiRoutes;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
@@ -24,11 +27,29 @@ public class UsersController : ControllerBase
     [HttpGet]
     [HttpHead]
     //[Authorize(Policy = "AdminCanAccess")]
-    public async Task<IActionResult> ListALLUsers()
+    public async Task<IActionResult> ListALLUsers([FromQuery] QueryOptions queryOptions)
     {
-        var users = await _userService.ListAllUsersAsync();
-        return Ok(users);
+        var users = await _userService.ListAllUsersAsync(queryOptions);
+
+        if(users == null)
+        {
+            return NotFound();
+        }
+        var userDtos = users.Select(user => _userMapper.ToReadDto(user));
+        // paginationMetadata 
+        var paginationMetadata = new
+        {
+            totalCount = users.TotalRecords,
+            pageSize = users.PageSize,
+            currentPage = users.CurrentPage,
+            totalPages = users.TotalPages,
+        };
+
+        Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
+
+        return Ok(userDtos);
     }
+
     [HttpGet("{id}", Name = "GetOneUser")]
     public async Task<IActionResult> GetOneUser(Guid id)
     {
@@ -37,14 +58,6 @@ public class UsersController : ControllerBase
         {
             return NotFound();
         }
-        //var etag = $"\"{user.MembershipEndDate.Ticks}\"";
-        //var clientEtag = Request.Headers["If-None-Match"].FirstOrDefault();
-
-        //if (clientEtag == etag)
-        //{
-        //    return StatusCode(StatusCodes.Status304NotModified);
-        //}
-        //Response.Headers["ETag"] = etag;
         var userReadDto = _userMapper.ToReadDto(user);
         return Ok(userReadDto);
     }

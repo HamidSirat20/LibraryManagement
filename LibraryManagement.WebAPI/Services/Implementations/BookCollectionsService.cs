@@ -21,14 +21,18 @@ public class BookCollectionsService : IBookCollectionsService
     {
         if (bookIds == null || !bookIds.Any())
         {
-            throw new ArgumentNullException(nameof(bookIds));
+            throw new ArgumentException(nameof(bookIds));
         }
+
         var books = await _dbContext.Books
             .Where(b => bookIds.Contains(b.Id))
+            .AsNoTracking()
+            .OrderByDescending(b => b.PublishedDate)
             .ToListAsync();
+
         if (books.Count != bookIds.Count())
         {
-            throw new KeyNotFoundException("One or more book IDs were not found.");
+            throw new InvalidOperationException("One or more book IDs were not found.");
         }
         return books.Select(book => _bookMapper.ToBookReadDto(book));
     }

@@ -68,7 +68,7 @@ public class LoansService : ILoansService
 
             var loanReadDto = _mapper.ToLoanReadDto(loanWithDetails);
 
-            _logger.LogInformation("Created new loan with ID: {LoanId}", loan.Id);
+            _logger.LogDebug("Created new loan with ID: {LoanId}", loan.Id);
             return loanReadDto;
         }
         catch (Exception ex)

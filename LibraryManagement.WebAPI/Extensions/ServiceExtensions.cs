@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Converters;
+using Serilog;
 using System.Net;
 using System.Net.Mail;
 
@@ -69,6 +70,17 @@ public static class ServiceExtensions
                     .Add("application/vnd.hamid.hateoas+json");
             }
         });
+
+        //add logging for error
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .WriteTo.File("logs/log-.txt",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                fileSizeLimitBytes: 10 * 1024 * 1024) 
+            .CreateLogger();
+
+        webApplication.Host.UseSerilog();
 
         //configure cloudinary settings
         webApplication.Services.Configure<CloudinarySettings>(webApplication.Configuration.GetSection("CloudinarySettings"));

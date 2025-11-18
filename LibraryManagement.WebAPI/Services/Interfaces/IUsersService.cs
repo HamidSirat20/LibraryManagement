@@ -1,10 +1,12 @@
-﻿using LibraryManagement.WebAPI.Models;
+﻿using LibraryManagement.WebAPI.Helpers;
+using LibraryManagement.WebAPI.Models;
+using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 
 namespace LibraryManagement.WebAPI.Services.Interfaces;
 public interface IUsersService
 {
-    Task<IEnumerable<User>> ListAllUsersAsync();
+    Task<PaginatedResponse<User>> ListAllUsersAsync( QueryOptions queryOptions);
     Task<User?> GetByIdAsync(Guid id, bool includeLoansAndReservations = false);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> CreateAdminAsync(UserCreateDto userCreateDto);

@@ -12,12 +12,12 @@ public class AuthorsService : IAuthorsService
 {
     private readonly LibraryDbContext _context;
     private readonly ILogger<AuthorsService> _logger;
-    private readonly IAuthorsMapper authorMapper;
+    private readonly IAuthorsMapper _authorMapper;
     public AuthorsService(LibraryDbContext context, ILogger<AuthorsService> logger, IAuthorsMapper authorMapper)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        this.authorMapper = authorMapper ?? throw new ArgumentNullException(nameof(authorMapper));
+        _authorMapper = authorMapper ?? throw new ArgumentNullException(nameof(authorMapper));
     }
 
     public async Task<Author?> CreateAuthorAsync(AuthorCreateDto authorCreateDto)
@@ -30,14 +30,15 @@ public class AuthorsService : IAuthorsService
                 _logger.LogWarning("CreateAuthorAsync called with null DTO");
                 throw new ArgumentNullException(nameof(authorCreateDto));
             }
-            var author = authorMapper.ToAuthor(authorCreateDto);
+
+            var author = _authorMapper.ToAuthor(authorCreateDto);
             _context.Authors.Add(author);
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Creating new author with ID: {AuthorId}", author.Id);
+            _logger.LogDebug("Creating new author with ID: {AuthorId}", author.Id);
             return author;
 
         }
-        catch (DbUpdateException ex)
+        catch (DbUpdateException ex) 
         {
             _logger.LogError(ex, "Database error creating author ");
             throw new InvalidOperationException("Unable to create author due to database error.", ex);
@@ -51,6 +52,9 @@ public class AuthorsService : IAuthorsService
 
     public async Task<Author> DeleteAuthorAsync(Guid id)
     {
+        if (id == Guid.Empty)
+            throw new ArgumentException(nameof(id));
+
         try
         {
             var author = await _context.Authors.FindAsync(id);
@@ -87,9 +91,9 @@ public class AuthorsService : IAuthorsService
 
     public async Task<bool> EntityExistsAsync(Guid id)
     {
-        var exists = await _context.Authors.AnyAsync(a => a.Id == id);
         try
         {
+            var exists = await _context.Authors.AnyAsync(a => a.Id == id);
             if (!exists)
             {
                 _logger.LogWarning("Author with ID {AuthorId} does not exist", id);
@@ -118,7 +122,7 @@ public class AuthorsService : IAuthorsService
             if (author == null)
             {
                 _logger.LogWarning("Author with email {Email} not found", email);
-                return null;
+                throw new KeyNotFoundException($"Author not for the {email} email.");
             }
             return author;
 
@@ -132,6 +136,8 @@ public class AuthorsService : IAuthorsService
 
     public async Task<Author?> GetAuthorByIdAsync(Guid id)
     {
+        if (id == Guid.Empty)
+            throw new ArgumentException($"Provide a valid id to retrieve author.");
         try
         {
             var author = await _context.Authors
@@ -141,7 +147,7 @@ public class AuthorsService : IAuthorsService
             if (author == null)
             {
                 _logger.LogWarning("Author with ID {AuthorId} not found", id);
-                return null;
+                throw new KeyNotFoundException($"Author not found for provided id: {id}.");
             }
             return author;
         }
@@ -197,6 +203,7 @@ public class AuthorsService : IAuthorsService
                 UpdatedAt = p.UpdatedAt,
                 BookCount = p.BookAuthors.Count()
             });
+
             return await PaginatedResponse<AuthorReadDto>.CreateAsync(result, queryOptions.PageNumber, queryOptions.PageSize);
         }
         catch (Exception ex)
@@ -286,7 +293,7 @@ public class AuthorsService : IAuthorsService
                 throw new KeyNotFoundException($"Author not found");
             }
 
-            var updatedAuthor = authorMapper.UpdateFromDto(author, authorUpdateDto);
+            var updatedAuthor = _authorMapper.UpdateFromDto(author, authorUpdateDto);
             await _context.SaveChangesAsync();
             _logger.LogInformation("Updated author with ID: {AuthorId}", id);
             return updatedAuthor;
@@ -300,7 +307,6 @@ public class AuthorsService : IAuthorsService
         {
             _logger.LogError(ex, "Error updating author");
             throw;
-
         }
     }
 }

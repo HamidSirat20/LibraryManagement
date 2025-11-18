@@ -70,6 +70,7 @@ public class BooksController : ControllerBase
             currentPage = books.CurrentPage,
             totalPages = books.TotalPages,
         };
+
         Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginationMetadata);
 
         var bookWithPublisherDto = new List<BookWithPublisherDto>();
