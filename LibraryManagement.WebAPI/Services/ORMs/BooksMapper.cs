@@ -84,11 +84,11 @@ public class BooksMapper : IBooksMapper
         };
     }
 
-    public BookDto ToBookCreateDto(Book book)
+    public BookCreateDto ToBookCreateDto(Book book)
     {
         if (book == null) return null;
 
-        return new BookDto
+        return new BookCreateDto
         {
             Title = book.Title,
             Genre = book.Genre,
@@ -114,7 +114,7 @@ public class BooksMapper : IBooksMapper
         };
     }
 
-    public Book ToBook(BookDto bookCreateDto)
+    public Book ToBook(BookCreateDto bookCreateDto)
     {
         if (bookCreateDto == null) return null;
 

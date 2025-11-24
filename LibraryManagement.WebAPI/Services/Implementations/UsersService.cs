@@ -100,7 +100,9 @@ public class UsersService : IUsersService
         {
             _logger.LogInformation("Creating user with email {Email}", userCreateDto.Email);
             var user = _userMapper.ToEntity(userCreateDto);
-            //upload avatar if exists
+            if (userCreateDto.File == null)
+                    throw new BusinessRuleViolationException("User avatar is required.", "AVATAR_REQUIRED");
+            // upload avatar if exists
             if (userCreateDto.File != null)
             {
                 var uploadResult = await _imageService.AddImageAsync(userCreateDto.File);

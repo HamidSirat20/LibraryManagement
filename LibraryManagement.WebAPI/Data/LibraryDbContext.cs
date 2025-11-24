@@ -24,47 +24,33 @@ public class LibraryDbContext : DbContext
 
         AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
     }
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        var dataSourceBuilder = new NpgsqlDataSourceBuilder(_config.GetConnectionString("DefaultConnection"));
-
-        dataSourceBuilder.MapEnum<UserRole>("user_role");
-        dataSourceBuilder.MapEnum<Genre>("genre");
-        dataSourceBuilder.MapEnum<FineStatus>("fine_status");
-        dataSourceBuilder.MapEnum<LoanStatus>("loan_status");
-        dataSourceBuilder.MapEnum<ReservationStatus>("reservation_status");
-
-        var dataSource = dataSourceBuilder.Build();
-
-        optionsBuilder
-            .UseNpgsql(dataSource)
-            .UseSnakeCaseNamingConvention();
-
-    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasPostgresEnum<UserRole>("public", "user_role");
-        modelBuilder.HasPostgresEnum<Genre>("public", "genre");
-        modelBuilder.HasPostgresEnum<FineStatus>("public", "fine_status");
-        modelBuilder.HasPostgresEnum<LoanStatus>("public", "loan_status");
-        modelBuilder.HasPostgresEnum<ReservationStatus>("public", "reservation_status");
 
-        modelBuilder.Entity<User>()
-                    .Property(u => u.Role)
-                    .HasColumnType("user_role");
+        if (Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
+        {
+            modelBuilder.HasPostgresEnum<UserRole>("public", "user_role");
+            modelBuilder.HasPostgresEnum<Genre>("public", "genre");
+            modelBuilder.HasPostgresEnum<FineStatus>("public", "fine_status");
+            modelBuilder.HasPostgresEnum<LoanStatus>("public", "loan_status");
+            modelBuilder.HasPostgresEnum<ReservationStatus>("public", "reservation_status");
 
-        modelBuilder.Entity<Book>()
-                    .Property(b => b.Genre)
-                    .HasColumnType("genre");
+            modelBuilder.Entity<User>()
+                .Property(u => u.Role)
+                .HasColumnType("user_role");
 
-        modelBuilder.Entity<Loan>()
-                    .Property(l => l.LoanStatus)
-                    .HasColumnType("loan_status");
+            modelBuilder.Entity<Book>()
+                .Property(b => b.Genre)
+                .HasColumnType("genre");
 
-        modelBuilder.Entity<Reservation>()
-          .Property(l => l.ReservationStatus)
-          .HasColumnType("reservation_status");
+            modelBuilder.Entity<Loan>()
+                .Property(l => l.LoanStatus)
+                .HasColumnType("loan_status");
 
+            modelBuilder.Entity<Reservation>()
+                .Property(l => l.ReservationStatus)
+                .HasColumnType("reservation_status");
+        }
 
         base.OnModelCreating(modelBuilder);
     }

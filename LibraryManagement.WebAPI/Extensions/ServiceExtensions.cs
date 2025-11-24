@@ -125,16 +125,18 @@ public static class ServiceExtensions
         // Add DbContext
         webApplication.Services.AddDbContext<LibraryDbContext>(options =>
         {
-            options.UseNpgsql(webApplication.Configuration.GetConnectionString("DefaultConnection"),
-                npgsqlOptions =>
-                {
-                    npgsqlOptions.MapEnum<UserRole>("user_role");
-                    npgsqlOptions.MapEnum<Genre>("genre");
-                    npgsqlOptions.MapEnum<FineStatus>("fine_status");
-                    npgsqlOptions.MapEnum<LoanStatus>("loan_status");
-                    npgsqlOptions.MapEnum<ReservationStatus>("reservation_status");
+            var connectionString = webApplication.Configuration.GetConnectionString("DefaultConnection");
 
-                });
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MapEnum<UserRole>("user_role");
+                npgsqlOptions.MapEnum<Genre>("genre");
+                npgsqlOptions.MapEnum<FineStatus>("fine_status");
+                npgsqlOptions.MapEnum<LoanStatus>("loan_status");
+                npgsqlOptions.MapEnum<ReservationStatus>("reservation_status");
+            });
+
+            options.UseSnakeCaseNamingConvention();
         });
         webApplication.Services.AddResponseCaching();
 

@@ -8,7 +8,7 @@ public interface IBooksService
 {
     Task<PaginatedResponse<Book>> ListAllBooksAsync(QueryOptions queryOption);
     Task<Book?> GetByIdAsync(Guid id, bool includePublisher = false);
-    Task<Book> CreateBookAsync(BookDto bookCreateDto);
+    Task<Book> CreateBookAsync(BookCreateDto bookCreateDto);
     Task<Book> UpdateBookAsync(Guid id, BookUpdateDto bookUpdateDto);
     Task<Book> PartiallyUpdateBookAsync(Book book);
     Task<bool> EntityExistsAsync(Guid id);

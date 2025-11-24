@@ -51,7 +51,7 @@ public class BookCollectionsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<IEnumerable<BookReadDto>>> CreateBookCollection([FromBody] IEnumerable<BookDto> bookCreateDtos)
+    public async Task<ActionResult<IEnumerable<BookReadDto>>> CreateBookCollection([FromBody] IEnumerable<BookCreateDto> bookCreateDtos)
     {
         if (bookCreateDtos == null || !bookCreateDtos.Any())
         {

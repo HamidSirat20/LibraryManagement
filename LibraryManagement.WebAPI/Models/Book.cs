@@ -31,10 +31,7 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
     public Guid PublisherId { get; set; }
     public Publisher Publisher { get; set; } = default!;
 
-    public Book()
-    {
-
-    }
+    public Book(){}
     public Book(string title, string description, DateTime publishedDate, Genre genre, int pages)
     {
         Title = title;

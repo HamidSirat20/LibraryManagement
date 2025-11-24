@@ -7,8 +7,8 @@ public interface IBooksMapper
     BookWithPublisherDto ToBookWithPublisherDto(Book book);
     BookWithoutPublisherDto ToBookWithoutPublisherDto(Book book);
     BookReadDto ToBookReadDto(Book book);
-    BookDto ToBookCreateDto(Book book);
+    BookCreateDto ToBookCreateDto(Book book);
     BookUpdateDto ToBookUpdateDto(Book book);
-    Book ToBook(BookDto bookCreateDto);
+    Book ToBook(BookCreateDto bookCreateDto);
     Book UpdateFromDto(Book book, BookUpdateDto bookUpdateDto);
 }

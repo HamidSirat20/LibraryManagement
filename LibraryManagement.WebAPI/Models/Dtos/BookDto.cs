@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LibraryManagement.WebAPI.Models.Dtos;
 
-public class BookDto : BookForManipulation
+public class BookCreateDto : BookForManipulation
 {
     [Required(ErrorMessage = "At least one author is required.")]
     [MinLength(1, ErrorMessage = "At least one author is required.")]

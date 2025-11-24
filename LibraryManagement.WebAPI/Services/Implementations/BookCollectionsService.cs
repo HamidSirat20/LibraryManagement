@@ -37,7 +37,7 @@ public class BookCollectionsService : IBookCollectionsService
         return books.Select(book => _bookMapper.ToBookReadDto(book));
     }
 
-    public async Task<IEnumerable<BookReadDto>> CreateBooksAsync(IEnumerable<BookDto> bookCreateDtos)
+    public async Task<IEnumerable<BookReadDto>> CreateBooksAsync(IEnumerable<BookCreateDto> bookCreateDtos)
     {
         if (bookCreateDtos == null || !bookCreateDtos.Any())
         {

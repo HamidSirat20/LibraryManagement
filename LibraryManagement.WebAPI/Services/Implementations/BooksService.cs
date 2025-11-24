@@ -24,7 +24,7 @@ public class BooksService : IBooksService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     #region CreateBookAsync
-    public async Task<Book> CreateBookAsync(BookDto bookCreateDto)
+    public async Task<Book> CreateBookAsync(BookCreateDto bookCreateDto)
     {
         try
         {
