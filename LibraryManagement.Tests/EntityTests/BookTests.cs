@@ -1,7 +1,7 @@
 ﻿using LibraryManagement.Test.Test_Data_Builders;
 using LibraryManagement.WebAPI.Models;
 
-namespace LibraryManagement.Test.Utilities;
+namespace LibraryManagement.Test.EntityTests;
 public class BookTests
 {
     [Theory]

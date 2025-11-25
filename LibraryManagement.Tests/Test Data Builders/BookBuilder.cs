@@ -3,6 +3,7 @@
 namespace LibraryManagement.Test.Test_Data_Builders;
 public class BookBuilder
 {
+    private Guid _id = Guid.NewGuid();
     private string _title = "Default Book Title";
     private string _description = "Default description";
     private DateTime _publishedDate = new DateTime(2000, 1, 1);
@@ -19,6 +20,11 @@ public class BookBuilder
         return this;
     }
 
+    public BookBuilder WithId(Guid id)
+    {
+        _id = Guid.NewGuid();
+        return this;
+    }
     public BookBuilder WithDescription(string description)
     {
         _description = description;

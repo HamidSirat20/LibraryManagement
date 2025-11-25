@@ -1,6 +1,6 @@
 ﻿using LibraryManagement.Test.Test_Data_Builders;
 
-namespace LibraryManagement.Test.Utilities;
+namespace LibraryManagement.Test.EntityTests;
 public class UserTests
 {
     [Theory]
