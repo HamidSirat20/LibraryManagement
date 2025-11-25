@@ -10,7 +10,6 @@ Repository: https://github.com/HamidSirat20/LibraryManagement
 - Fulfill (pickup) reservations ? creates loans and marks reservation fulfilled.  
 - Per-user and admin listing endpoints (search, sort, pagination).  
 - DTO mapping (`ReservationReadDto`) to shape API responses and avoid returning navigation properties.  
-- Pluggable email notifications and structured logging via `ILogger`.  
 - Unit tests for core service behavior started; more unit/integration tests planned.
 
 ## Technology stack
@@ -19,11 +18,11 @@ Repository: https://github.com/HamidSirat20/LibraryManagement
 - Manual mappers for DTO mapping  
 - ILogger for structured logging  
 - Optional SMTP/email provider abstraction via `IEmailService`  
-- xUnit / NUnit (unit tests — started)
+- xUnit / NUnit (unit tests â€” started)
 
 ## Getting started
 
 Prerequisites
 - .NET 8 SDK
-- A relational database ( PostgreSQL) — connection configured in `appsettings.json`
+- A relational database ( PostgreSQL) â€” connection configured in `appsettings.json`
 - (Optional) SMTP credentials for email notifications
