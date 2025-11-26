@@ -177,10 +177,10 @@ public class AuthorsService : IAuthorsService
             var searchTerm = queryOptions.SearchTerm?.Trim() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(p => p.FirstName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                                   p.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                                   p.LastName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                                   p.Bio.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(p => p.FirstName.ToLower().Contains(searchTerm) ||
+                                                   p.Email.ToLower().Contains(searchTerm) ||
+                                                   p.LastName.ToLower().Contains(searchTerm) ||
+                                                   p.Bio.ToLower().Contains(searchTerm));
             }
             // Apply sorting
             if (!string.IsNullOrWhiteSpace(queryOptions.OrderBy))

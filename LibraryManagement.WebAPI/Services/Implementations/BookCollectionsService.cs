@@ -20,9 +20,10 @@ public class BookCollectionsService : IBookCollectionsService
     public async Task<IEnumerable<BookReadDto>> GetBookCollectionsAsync(IEnumerable<Guid> bookIds)
     {
         if (bookIds == null || !bookIds.Any())
-        {
             throw new ArgumentException(nameof(bookIds));
-        }
+
+        if (bookIds.Any(id => id == Guid.Empty))
+            throw new ArgumentException("Book ID cannot be empty.", nameof(bookIds));
 
         var books = await _dbContext.Books
             .Where(b => bookIds.Contains(b.Id))
@@ -43,6 +44,9 @@ public class BookCollectionsService : IBookCollectionsService
         {
             throw new ArgumentNullException(nameof(bookCreateDtos));
         }
+
+        if (bookCreateDtos.Any(dto => dto == null))
+            throw new ArgumentNullException("One or more BookCreateDto items are null.");
 
         var books = new List<Book>();
 

@@ -15,6 +15,7 @@ public class AuthorsServiceFixture : IDisposable
     public Mock<ILogger<AuthorsService>> LoggerMock { get; }
     public Mock<IAuthorsMapper> AuthorMapperMock { get; }
     public Mock<IConfiguration> ConfigurationMock { get; }
+    public AuthorsService AuthorsService { get; }
     public AuthorsServiceFixture()
     {
         Connection = new SqliteConnection("Data Source = :memory:");
@@ -27,10 +28,14 @@ public class AuthorsServiceFixture : IDisposable
 
         ConfigurationMock = new Mock<IConfiguration>();
         DbContext = new LibraryDbContext(options, ConfigurationMock.Object);
+        DbContext.Database.EnsureDeleted();
+        DbContext.Database.EnsureCreated();
 
         LoggerMock = new Mock<ILogger<AuthorsService>>();
 
         AuthorMapperMock = new Mock<IAuthorsMapper>();
+
+        AuthorsService = new AuthorsService(DbContext,LoggerMock.Object, AuthorMapperMock.Object);
 
     }
     public void Dispose()
