@@ -37,6 +37,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         Assert.NotNull(createdAuthor);
         Assert.Equal(author.FirstName, createdAuthor.FirstName);
         Assert.Equal(author.LastName, createdAuthor.LastName);
+        _fixture.Reset();
     }
     [Fact]
     public async Task CreateAuthorAsync_WhenNullAuthorCreateDtoProvided_ThrowsException()
@@ -55,6 +56,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         {
             await _authorsService.CreateAuthorAsync(authorCreateDto);
         });
+        _fixture.Reset();
     }
     [Fact]
     public async Task DeleteAuthorAsync_WhenAuthorIdIsProvided_DeleteAuthor()
@@ -72,6 +74,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         //Assert
         Assert.NotNull(result);
         Assert.Equal(author.Id, result.Id);
+        _fixture.Reset();
     }
     [Fact]
     public async Task DeleteAuthorAsync_WhenEmptyIdIsProvided_ThrowsException()
@@ -89,6 +92,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         {
             await _authorsService.DeleteAuthorAsync(Guid.Empty);
         });
+        _fixture.Reset();
     }
     [Fact]
     public async Task DeleteAuthorAsync_WhenAuthorNotFound_ThrowsException()
@@ -106,6 +110,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         {
             await _authorsService.DeleteAuthorAsync(Guid.NewGuid());
         });
+        _fixture.Reset();
     }
 
     [Fact]
@@ -125,7 +130,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         Assert.Equal(author.Id, result.Id);
         Assert.Equal(author.Email, result.Email);
         Assert.Equal(author.FirstName, result.FirstName);
-
+        _fixture.Reset();
     }
     [Fact]
     public async Task GetAuthorByEmailAsync_WhenNullEmailProvided_ThrowsException()
@@ -142,6 +147,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         {
             await _authorsService.GetAuthorByEmailAsync(null);
         });
+        _fixture.Reset();
     }
 
     [Fact]
@@ -159,6 +165,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         {
             await _authorsService.GetAuthorByEmailAsync("test@email.com");
         });
+        _fixture.Reset();
     }
 
     [Fact]
@@ -177,7 +184,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         Assert.Equal(author.Id, result.Id);
         Assert.Equal(author.Email, result.Email);
         Assert.Equal(author.FirstName, result.FirstName);
-
+        _fixture.Reset();
     }
     [Fact]
     public async Task GetAuthorByIdAsync_WhenEmptyIdProvided_ThrowsException()
@@ -193,6 +200,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         {
             await _authorsService.GetAuthorByIdAsync(Guid.Empty);
         });
+        _fixture.Reset();
     }
 
     [Fact]
@@ -210,6 +218,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         {
             await _authorsService.GetAuthorByIdAsync(Guid.NewGuid());
         });
+        _fixture.Reset();
     }
 
     [Fact]
@@ -246,6 +255,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         //Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
+        _fixture.Reset();
     }
     [Fact]
     public async Task UpdateAuthorAsync_WhenValidAuthorDtoProvided_ReturnCreatedAuthor()
@@ -281,6 +291,7 @@ public class AuthorsServiceTests : IClassFixture<AuthorsServiceFixture>
         Assert.NotNull(updatedAuthor);
         Assert.Equal(author.FirstName, updatedAuthor.FirstName);
         Assert.Equal(author.LastName, updatedAuthor.LastName);
+        _fixture.Reset();
     }
 }
 

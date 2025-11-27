@@ -54,6 +54,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         Assert.Equal(testUser.Id, result.Id);
         Assert.Equal(testUser.Email, result.Email);
         Assert.Equal(testUser.FirstName, result.FirstName);
+        _fixture.Reset();
     }
     [Fact]
     public async Task GetUserByEmail_ExistingUser_ReturnsUser()
@@ -83,6 +84,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         // Assert
         Assert.NotNull(result);
         Assert.Equal("test@example.com", result.Email);
+        _fixture.Reset();
     }
 
     [Fact]
@@ -94,6 +96,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         var result = await _usersService.GetByIdAsync(nonExistingId);
         // Assert
         Assert.Null(result);
+        _fixture.Reset();
     }
 
     [Fact]
@@ -164,6 +167,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         Assert.Equal(userCreateDto.LastName, result.LastName);
         Assert.Equal(userCreateDto.Phone, result.Phone);
         Assert.NotNull(result.AvatarUrl);
+        _fixture.Reset();
     }
 
     [Fact]
@@ -228,7 +232,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         // Assert
 
         Assert.Equal("Admin", result.Role.ToString());
-
+        _fixture.Reset();
     }
     [Fact]
     public async Task CreateUser_WhenUserCreateDtoIsNull_ThrowsException()
@@ -241,6 +245,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         {
             await _usersService.CreateUserAsync(userCreateDtoNull);
         });
+        _fixture.Reset();
     }
     [Fact]
     public async Task CreateUser_WhenImageFileIsNull_ThrowsException()
@@ -263,6 +268,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         {
             await _usersService.CreateUserAsync(userCreateDtoNullImage);
         });
+        _fixture.Reset();
     }
     [Fact]
     public async Task ChangePassword_WhenNewPasswordIsProvided_ChangePassword()
@@ -297,6 +303,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         await _usersService.ChangePassword(existingUser.Id, "NewPassword@123");
         // Assert
         Assert.Equal("NewPassword@123", existingUser.Password);
+        _fixture.Reset();
     }
 
     [Fact]
@@ -309,6 +316,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
          {
              await _usersService.ChangePassword(Guid.NewGuid(), "NewPassword@123");
          });
+        _fixture.Reset();
     }
     [Fact]
     public async Task DeleteUser_WhenExistingUserIdIsProvided_DeletesUser()
@@ -332,6 +340,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         await _usersService.DeleteByIdAsync(existingUser.Id);
         // Assert
         Assert.True(!_dbContext.Users.Any(u => u.Id == existingUser.Id));
+        _fixture.Reset();
     }
     [Fact]
     public async Task DeleteUserImage_WhenExistingUserIdIsProvided_DeletesUserImage()
@@ -371,6 +380,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
             s => s.DeleteImageAsync("fake-public-id"),
             Times.Once
         );
+        _fixture.Reset();
     }
 
     [Fact]
@@ -383,6 +393,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
           {
               await _usersService.DeleteByIdAsync(Guid.Empty);
           });
+        _fixture.Reset();
     }
     [Fact]
     public async Task DeleteUser_WhenUserNotFound_ThrowException()
@@ -409,6 +420,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
           {
               await _usersService.DeleteByIdAsync(Guid.NewGuid());
           });
+        _fixture.Reset();
     }
 
     [Fact]
@@ -435,7 +447,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         var result = await _usersService.EntityExistAsync(existingUser.Id);
         // Assert
         Assert.True(result);
-
+        _fixture.Reset();
     }
 
     [Fact]
@@ -447,7 +459,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         var result = await _usersService.EntityExistAsync(Guid.NewGuid());
         // Assert
         Assert.False(result);
-
+        _fixture.Reset();
     }
 
     [Fact]
@@ -529,6 +541,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         Assert.NotNull(result);
         Assert.Single(result);
         Assert.Equal(testLoan, result.First().Loans.First());
+        _fixture.Reset();
     }
     [Fact]
     public async Task GetUserOverDueLoans_IfOverDueLoansExist_ReturnUserWithOverDueLoan()
@@ -609,6 +622,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         Assert.NotNull(result);
         Assert.Single(result);
         Assert.Equal(testLoan, result.First().Loans.First());
+        _fixture.Reset();
     }
     [Fact]
     public async Task ListAllUsersAsync_WithSearchAndPagination_ReturnsFilteredAndPagedUsers()
@@ -684,6 +698,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         Assert.Equal(2, result.Count);
         Assert.All(result, u => Assert.Contains("Kabul", u.Address));
         Assert.Equal("Test1", result.First().FirstName);
+        _fixture.Reset();
     }
 
     [Fact]
@@ -716,6 +731,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         // Assert
         Assert.NotNull(result);
         Assert.Equal(UserRole.Admin, result.Role);
+        _fixture.Reset();
     }
     [Fact]
     public async Task UpdateUserAsync_WithValidData_UpdatesUserSuccessfully()
@@ -787,6 +803,7 @@ public class UsersServiceTests : IClassFixture<UsersServiceFixture>
         _fixture.ImageServiceMock.Verify(s => s.DeleteImageAsync("old-public-id"), Times.Once);
         _fixture.ImageServiceMock.Verify(s => s.AddImageAsync(userUpdateDto.File), Times.Once);
         _fixture.UserMapperMock.Verify(m => m.UpdateFromDto(It.IsAny<User>(), userUpdateDto), Times.Once);
+        _fixture.Reset();
     }
 
 }

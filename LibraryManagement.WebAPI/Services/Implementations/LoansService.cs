@@ -16,7 +16,7 @@ public class LoansService : ILoansService
     private readonly ILogger<LoansService> _logger;
     private readonly IEmailsTemplateService _emailTemplateService;
     private readonly IReservationsQueueService _reservationQueueService;
-    public LoansService(LibraryDbContext context, ILoansMapper mapper, ILogger<LoansService> logger, IHttpContextAccessor httpContextAccessor, IEmailsTemplateService emailTemplateService, IReservationsQueueService reservationQueueService)
+    public LoansService(LibraryDbContext context, ILoansMapper mapper, ILogger<LoansService> logger, IEmailsTemplateService emailTemplateService, IReservationsQueueService reservationQueueService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
@@ -166,6 +166,7 @@ public class LoansService : ILoansService
                 query = query.Where(l => l.Book.Title.ToLower().Contains(searchTerm) ||
                                          l.User.FirstName.ToLower().Contains(searchTerm) ||
                                          l.User.LastName.ToLower().Contains(searchTerm) ||
+                                         l.User.Email.ToLower().Contains(searchTerm) ||
                                          l.LoanStatus.ToString().ToLower().Contains(searchTerm));
             }
 
@@ -193,7 +194,7 @@ public class LoansService : ILoansService
             if (loan == null)
             {
                 _logger.LogWarning("Loan with {loan.Id} does not exist!", loanId);
-                throw new BusinessRuleViolationException($"Book with {loanId} not found", "Not_Found");
+                throw new BusinessRuleViolationException($"Book with {loanId} id not found", "Not_Found");
             }
             _logger.LogInformation("Loan with Id {loan.Id} returned!", loan.Id);
             return loan;
@@ -242,7 +243,7 @@ public class LoansService : ILoansService
             if (returnLoan == null)
             {
                 _logger.LogWarning($"Loan with {loanId} id not found.");
-                throw new Exception($"Loan with {loanId} id not found.");
+                throw new ArgumentNullException($"Loan with {loanId} id not found.");
             }
 
             // Update loan status to Returned and set return date
@@ -265,10 +266,12 @@ public class LoansService : ILoansService
                 .FirstOrDefaultAsync();
 
             //send email notification to user
-            var emailBody = _emailTemplateService.GetReservationReadyTemplate(nextReservation.User.FirstName, nextReservation.User.LastName,
-                nextReservation.Book.Title, DateTime.Now.AddDays(3));
-            await _reservationQueueService.ProcessNextReservationAfterReturnAsync(nextReservation.BookId, "Your reservation is ready for pickup.", emailBody);
-
+            if (nextReservation != null)
+            {
+                var emailBody = _emailTemplateService.GetReservationReadyTemplate(nextReservation.User.FirstName, nextReservation.User.LastName,
+                 nextReservation.Book.Title, DateTime.Now.AddDays(3));
+                await _reservationQueueService.ProcessNextReservationAfterReturnAsync(nextReservation.BookId, "Your reservation is ready for pickup.", emailBody);
+            }
 
             return returnLoan;
         }
@@ -298,7 +301,7 @@ public class LoansService : ILoansService
             if (hasActiveReservation)
             {
                 _logger.LogWarning("Loan with {loan.Id} does not exist!", loanToUpdate.Id);
-                throw new Exception("You can not extend this book since it is reserved by someone.");
+                throw new InvalidOperationException("You can not extend this book since it is reserved by someone.");
             }
             // Extend the due date by 30 days
             loanToUpdate.DueDate = loanToUpdate.DueDate.AddDays(30);

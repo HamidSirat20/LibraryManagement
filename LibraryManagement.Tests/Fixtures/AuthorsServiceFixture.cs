@@ -35,7 +35,7 @@ public class AuthorsServiceFixture : IDisposable
 
         AuthorMapperMock = new Mock<IAuthorsMapper>();
 
-        AuthorsService = new AuthorsService(DbContext,LoggerMock.Object, AuthorMapperMock.Object);
+        AuthorsService = new AuthorsService(DbContext, LoggerMock.Object, AuthorMapperMock.Object);
 
     }
     public void Dispose()
@@ -43,5 +43,23 @@ public class AuthorsServiceFixture : IDisposable
         Connection.Close();
         Connection.Dispose();
         DbContext.Dispose();
+    }
+
+    public void Reset()
+    {
+        // Clear all tables
+        DbContext.Loans.RemoveRange(DbContext.Loans);
+        DbContext.Reservations.RemoveRange(DbContext.Reservations);
+        DbContext.Users.RemoveRange(DbContext.Users);
+        DbContext.Books.RemoveRange(DbContext.Books);
+        DbContext.Authors.RemoveRange(DbContext.Authors);
+        DbContext.Publishers.RemoveRange(DbContext.Publishers);
+
+        DbContext.SaveChanges();
+
+        // Reset mocks
+        AuthorMapperMock.Reset();
+        ConfigurationMock.Reset();
+        LoggerMock.Reset();
     }
 }

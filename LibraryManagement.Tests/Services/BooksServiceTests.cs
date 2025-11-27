@@ -109,6 +109,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
         Assert.Equal(publisher.Id, createdBook.PublisherId);
         Assert.Single(createdBook.BookAuthors);
         Assert.Equal(author.Id, createdBook.BookAuthors.First().AuthorId);
+        _fixture.Reset();
     }
     [Fact]
     public async Task CreateBook_WhenNullBookCreateDtoProvided_ThrowException()
@@ -121,6 +122,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
         {
             await _booksService.CreateBookAsync(bookCreateDto);
         });
+        _fixture.Reset();
     }
     [Fact]
     public async Task CreateBook_WhenNullImageProvided_CreateBook()
@@ -197,6 +199,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
         Assert.Equal(publisher.Id, createdBook.PublisherId);
         Assert.Single(createdBook.BookAuthors);
         Assert.Equal(author.Id, createdBook.BookAuthors.First().AuthorId);
+        _fixture.Reset();
     }
 
     [Fact]
@@ -232,6 +235,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
         // Assert
         var storedBook = await _dbContext.Books.FindAsync(book.Id);
         Assert.Null(storedBook);
+        _fixture.Reset();
     }
     [Fact]
     public async Task DeleteBook_WhenWrongIdProvided_ThrowsExceptions()
@@ -243,7 +247,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
         {
             await _booksService.DeleteBookByIdAsync(Guid.NewGuid());
         });
-
+        _fixture.Reset();
     }
 
     [Fact]
@@ -282,6 +286,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
         Assert.Equal(publisher.Id, result.PublisherId);
         Assert.Single(result.BookAuthors);
         Assert.Equal(author.Id, result.BookAuthors.First().AuthorId);
+        _fixture.Reset();
     }
 
     [Fact]
@@ -334,6 +339,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
         //Assert
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
+        _fixture.Reset();
     }
 
     [Fact]
@@ -405,6 +411,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
         Assert.Equal(publisher.Id, createdBook.PublisherId);
         Assert.Single(createdBook.BookAuthors);
         Assert.Equal(author.Id, createdBook.BookAuthors.First().AuthorId);
+        _fixture.Reset();
     }
 
 }

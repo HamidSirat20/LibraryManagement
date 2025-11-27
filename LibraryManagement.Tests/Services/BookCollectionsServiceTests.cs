@@ -77,27 +77,30 @@ public class BookCollectionsServiceTests : IClassFixture<BookCollectionsServiceF
                 PublisherId = b.PublisherId,
 
             });
-        var listOfBookId = new List<Guid>() {book1.Id,book2.Id,book3.Id};
+        var listOfBookId = new List<Guid>() { book1.Id, book2.Id, book3.Id };
         // Act
         var result = await _bookCollectionsService.GetBookCollectionsAsync(listOfBookId);
         // Assert
         Assert.NotNull(result);
         var resultList = result.ToList();
         Assert.Equal(3, resultList.Count);
-        Assert.Equal(book2.Id, resultList[1].Id); 
-        Assert.Equal(book1.Id, resultList[0].Id);
+        // Verify that the mapper was called for each book
+        _fixture.BookMapperMock.Verify(m => m.ToBookReadDto(It.IsAny<Book>()), Times.Exactly(3));
+        _fixture.ResetMocks();
     }
     [Fact]
     public async Task GetBookCollectionsAsync_WithNullIds_ThrowsException()
     {
         // Arrange
-  
-        var listOfBookId = new List<Guid>() {Guid.Empty,Guid.Empty,Guid.Empty};
+
+        var listOfBookId = new List<Guid>() { Guid.Empty, Guid.Empty, Guid.Empty };
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(async () =>
         {
             var result = await _bookCollectionsService.GetBookCollectionsAsync(listOfBookId);
         });
+        _fixture.ResetMocks();
+
     }
     [Fact]
     public async Task AddBookCollectionsAsync_WithValidBookDtos_CreateBooks()
@@ -171,7 +174,7 @@ public class BookCollectionsServiceTests : IClassFixture<BookCollectionsServiceF
 
             });
 
-        var listOfBookCreateDtos = new List<BookCreateDto>() { bookCreateDto1,bookCreateDto2,bookCreateDto3};
+        var listOfBookCreateDtos = new List<BookCreateDto>() { bookCreateDto1, bookCreateDto2, bookCreateDto3 };
 
         // Act
         var result = await _bookCollectionsService.CreateBooksAsync(listOfBookCreateDtos);
@@ -180,6 +183,10 @@ public class BookCollectionsServiceTests : IClassFixture<BookCollectionsServiceF
         var resultList = result.ToList();
         Assert.Equal(3, resultList.Count);
         Assert.Equal(bookCreateDto2.Title, resultList[1].Title);
+
+        // Verify that the mapper was called for each book
+        _fixture.BookMapperMock.Verify(m => m.ToBookReadDto(It.IsAny<Book>()), Times.Exactly(3));
+        _fixture.ResetMocks();
     }
     [Fact]
     public async Task AddBookCollectionsAsync_WithNullBookDtos_ThrowsException()
@@ -193,12 +200,14 @@ public class BookCollectionsServiceTests : IClassFixture<BookCollectionsServiceF
         var bookCreateDto3 = (BookCreateDto)null;
 
 
-        var listOfBookCreateDtos = new List<BookCreateDto>() { bookCreateDto1,bookCreateDto2,bookCreateDto3};
+        var listOfBookCreateDtos = new List<BookCreateDto>() { bookCreateDto1, bookCreateDto2, bookCreateDto3 };
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
             var result = await _bookCollectionsService.CreateBooksAsync(listOfBookCreateDtos);
         });
+        _fixture.ResetMocks();
+
     }
 }

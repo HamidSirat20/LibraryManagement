@@ -9,38 +9,39 @@ using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LibraryManagement.Test.Fixtures;
-public class BooksServiceFixture : IDisposable
+public class LoansServiceFixture : IDisposable
 {
     public SqliteConnection Connection { get; }
     public LibraryDbContext DbContext { get; }
-    public BooksService BooksService { get; }
+    public Mock<ILoansMapper> LoansMapperMock { get; }
+    public Mock<IEmailsTemplateService> EmailsTemplateServiceMock { get; }
+    public Mock<IReservationsQueueService> ReservationQueueServiceMock { get; }
+    public Mock<ILogger<LoansService>> LoggerMock { get; }
     public Mock<IConfiguration> ConfigurationMock { get; }
-    public Mock<IBooksMapper> BookMapperMock;
-    public Mock<IImageService> ImageServiceMock;
-    public Mock<ILogger<BooksService>> LoggerMock;
-    public BooksServiceFixture()
+    public LoansService LoansService { get; }
+    public LoansServiceFixture()
     {
-        Connection = new SqliteConnection("Data Source=:memory:");
+        Connection = new SqliteConnection("DataSource=:memory:");
         Connection.Open();
-
         var options = new DbContextOptionsBuilder<LibraryDbContext>()
             .UseSqlite(Connection)
-            .EnableSensitiveDataLogging()
             .Options;
 
         ConfigurationMock = new Mock<IConfiguration>();
         DbContext = new LibraryDbContext(options, ConfigurationMock.Object);
+
         DbContext.Database.EnsureDeleted();
         DbContext.Database.EnsureCreated();
+        LoansMapperMock = new Mock<ILoansMapper>();
+        EmailsTemplateServiceMock = new Mock<IEmailsTemplateService>();
+        ReservationQueueServiceMock = new Mock<IReservationsQueueService>();
+        LoggerMock = new Mock<ILogger<LoansService>>();
 
-        BookMapperMock = new Mock<IBooksMapper>();
-        ImageServiceMock = new Mock<IImageService>();
-        LoggerMock = new Mock<ILogger<BooksService>>();
+        LoansService = new LoansService(
+            DbContext, LoansMapperMock.Object,
+            LoggerMock.Object, EmailsTemplateServiceMock.Object,
+            ReservationQueueServiceMock.Object); ;
 
-        BooksService = new BooksService(DbContext, 
-                                        BookMapperMock.Object,
-                                        ImageServiceMock.Object,
-                                        LoggerMock.Object); 
     }
     public void Dispose()
     {
@@ -61,9 +62,10 @@ public class BooksServiceFixture : IDisposable
         DbContext.SaveChanges();
 
         // Reset mocks
-        BookMapperMock.Reset();
-        ConfigurationMock.Reset();
-        ImageServiceMock.Reset();
+        LoansMapperMock.Reset();
+        EmailsTemplateServiceMock.Reset();
+        ReservationQueueServiceMock.Reset();
         LoggerMock.Reset();
     }
+
 }

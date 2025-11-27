@@ -56,4 +56,22 @@ public class UsersServiceFixture : IDisposable
         Connection?.Dispose();
         DbContext?.Dispose();
     }
+    public void Reset()
+    {
+        // Clear all tables
+        DbContext.Loans.RemoveRange(DbContext.Loans);
+        DbContext.Reservations.RemoveRange(DbContext.Reservations);
+        DbContext.Users.RemoveRange(DbContext.Users);
+        DbContext.Books.RemoveRange(DbContext.Books);
+        DbContext.Authors.RemoveRange(DbContext.Authors);
+        DbContext.Publishers.RemoveRange(DbContext.Publishers);
+
+        DbContext.SaveChanges();
+
+        // Reset mocks
+        UserMapperMock.Reset();
+        PasswordServiceMock.Reset();
+        ImageServiceMock.Reset();
+        LoggerMock.Reset();
+    }
 }
