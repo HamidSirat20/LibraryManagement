@@ -1,4 +1,5 @@
-﻿using LibraryManagement.WebAPI.Data;
+﻿using FluentEmail.Core;
+using LibraryManagement.WebAPI.Data;
 using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
@@ -128,7 +129,8 @@ public class PublishersService : IPublishersService
 
             if (publisher == null)
             {
-                return null;
+                _logger.LogWarning($"Publisher {email} not found.");
+                throw new ArgumentNullException($"Publisher with {email} not found;");
             }
             return publisher;
         }
@@ -149,7 +151,8 @@ public class PublishersService : IPublishersService
 
             if (publisher == null)
             {
-                return null;
+                _logger.LogWarning($"Publisher {id} not found.");
+                throw new ArgumentNullException($"Publisher with {id} not found;");
             }
             return publisher;
         }
@@ -177,12 +180,12 @@ public class PublishersService : IPublishersService
                 .AsQueryable();
 
             // Apply search term filtering
-            var searchTerm = queryOptions.SearchTerm?.Trim() ?? string.Empty;
+            var searchTerm = queryOptions.SearchTerm?.Trim().ToLower() ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
-                query = query.Where(p => p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                         p.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                                         p.Address.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
+                query = query.Where(p => p.Name.ToLower().Contains(searchTerm) ||
+                                         p.Email.ToLower().Contains(searchTerm) ||
+                                         p.Address.ToLower().Contains(searchTerm));
             }
 
             // Apply sorting
