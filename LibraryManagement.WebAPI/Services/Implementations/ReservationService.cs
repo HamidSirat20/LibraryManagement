@@ -87,9 +87,9 @@ public class ReservationService : IReservationService
             var reservationReadDto = _reservationMapper.ToReservationReadDto(reservation);
 
             var newReservation = await _context.Reservations
-          .Include(r => r.User)
-          .Include(r => r.Book)
-          .FirstOrDefaultAsync(r => r.Id == reservation.Id);
+                      .Include(r => r.User)
+                      .Include(r => r.Book)
+                      .FirstOrDefaultAsync(r => r.Id == reservation.Id);
 
             // build email body
             var reservationCreatedAt = reservation.CreatedAt ?? DateTime.Now;
@@ -136,6 +136,10 @@ public class ReservationService : IReservationService
             reservation.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return reservation;
+        }
+        catch (BusinessRuleViolationException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -265,7 +269,7 @@ public class ReservationService : IReservationService
                 .Where(r => r.UserId == userId)
                 .Where(r => r.ReservationStatus == ReservationStatus.Pending)
                 .AsQueryable();
-            if (reservations == null)
+            if (!reservations.Any())
             {
                 _logger.LogWarning("No reservations found for user {UserId}", userId);
                 throw new BusinessRuleViolationException("No reservations found for the user.", "NO_RESERVATIONS");
