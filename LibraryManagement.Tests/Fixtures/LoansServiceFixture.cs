@@ -18,6 +18,7 @@ public class LoansServiceFixture : IDisposable
     public Mock<IReservationsQueueService> ReservationQueueServiceMock { get; }
     public Mock<ILogger<LoansService>> LoggerMock { get; }
     public Mock<IConfiguration> ConfigurationMock { get; }
+    public Mock<ILateReturnOrLostFeeService> LateReturnOrLostFeeServiceMock { get; }
     public LoansService LoansService { get; }
     public LoansServiceFixture()
     {
@@ -36,11 +37,11 @@ public class LoansServiceFixture : IDisposable
         EmailsTemplateServiceMock = new Mock<IEmailsTemplateService>();
         ReservationQueueServiceMock = new Mock<IReservationsQueueService>();
         LoggerMock = new Mock<ILogger<LoansService>>();
-
+        LateReturnOrLostFeeServiceMock = new Mock<ILateReturnOrLostFeeService>();
         LoansService = new LoansService(
             DbContext, LoansMapperMock.Object,
             LoggerMock.Object, EmailsTemplateServiceMock.Object,
-            ReservationQueueServiceMock.Object); ;
+            ReservationQueueServiceMock.Object, LateReturnOrLostFeeServiceMock.Object);
 
     }
     public void Dispose()

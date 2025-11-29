@@ -16,13 +16,15 @@ public class LoansService : ILoansService
     private readonly ILogger<LoansService> _logger;
     private readonly IEmailsTemplateService _emailTemplateService;
     private readonly IReservationsQueueService _reservationQueueService;
-    public LoansService(LibraryDbContext context, ILoansMapper mapper, ILogger<LoansService> logger, IEmailsTemplateService emailTemplateService, IReservationsQueueService reservationQueueService)
+    private readonly ILateReturnOrLostFeeService _lateReturnOrLostFeeService;
+    public LoansService(LibraryDbContext context, ILoansMapper mapper, ILogger<LoansService> logger, IEmailsTemplateService emailTemplateService, IReservationsQueueService reservationQueueService, ILateReturnOrLostFeeService lateReturnOrLostFeeService)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
         _reservationQueueService = reservationQueueService ?? throw new ArgumentNullException(nameof(reservationQueueService));
+        _lateReturnOrLostFeeService = lateReturnOrLostFeeService ?? throw new ArgumentNullException(nameof(lateReturnOrLostFeeService));
     }
 
     public async Task<LoanReadDto> MakeLoanAsync(LoanCreateDto loanCreateDto, Guid userId)
@@ -250,8 +252,20 @@ public class LoansService : ILoansService
             returnLoan.LoanStatus = LoanStatus.Returned;
             returnLoan.ReturnDate = DateTime.UtcNow;
 
-            // Calculate late fee if applicable
-            returnLoan.CalculateLateFee();
+            // Calculate late fee if applicable and create a LateReturnOrLostFee
+            if (returnLoan.CalculateLateFee() > 0)
+            {
+                var lateFee = new LateReturnOrLostFeeCreateDto
+                {
+                    LoanId = returnLoan.Id,
+                    Amount = returnLoan.CalculateLateFee(),
+                    Status = FineStatus.Pending,
+                    UserId = returnLoan.UserId,
+                    IssuedDate = DateTime.UtcNow,
+                    FineType = FineType.LateReturn
+                };
+                await _lateReturnOrLostFeeService.CreateFineAsync(lateFee);
+            }
 
             await _context.SaveChangesAsync();
             _logger.LogInformation("Loan with id {loanId} returned.", loanId);

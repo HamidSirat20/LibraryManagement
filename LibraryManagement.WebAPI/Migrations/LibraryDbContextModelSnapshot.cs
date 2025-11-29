@@ -21,14 +21,10 @@ namespace LibraryManagement.WebAPI.Migrations
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_status", new[] { "paid", "pending", "waived" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_status", new[] { "cancelled", "paid", "pending", "waived" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_type", new[] { "late_return", "lost_item" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "genre", new[] { "biography", "fantasy", "fiction", "history", "horror", "mystery", "non_fiction", "other", "romance", "science_fiction", "thriller" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "loan_status", new[] { "active", "lost", "overdue", "pending", "returned" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "fine_status", new[] { "pending", "paid", "waived" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "genre", new[] { "fiction", "non_fiction", "mystery", "science_fiction", "fantasy", "biography", "history", "romance", "thriller", "horror", "other" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "loan_status", new[] { "active", "returned", "overdue", "lost", "pending" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "reservation_status", new[] { "pending", "notified", "fulfilled", "cancelled" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "user_role", new[] { "user", "admin" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "reservation_status", new[] { "cancelled", "fulfilled", "notified", "pending" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_role", new[] { "admin", "user" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -186,6 +182,10 @@ namespace LibraryManagement.WebAPI.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<FineType>("FineType")
+                        .HasColumnType("fine_type")
+                        .HasColumnName("fine_type");
 
                     b.Property<DateTime>("IssuedDate")
                         .HasColumnType("timestamp without time zone")

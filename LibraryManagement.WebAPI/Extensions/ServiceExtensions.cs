@@ -77,7 +77,7 @@ public static class ServiceExtensions
             .WriteTo.File("logs/log-.txt",
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 7,
-                fileSizeLimitBytes: 10 * 1024 * 1024) 
+                fileSizeLimitBytes: 10 * 1024 * 1024)
             .CreateLogger();
 
         webApplication.Host.UseSerilog();
@@ -105,6 +105,8 @@ public static class ServiceExtensions
         webApplication.Services.AddScoped<IEmailsTemplateService, EmailsTemplateService>();
         webApplication.Services.AddScoped<IReservationsQueueService, ReservationsQueueService>();
         webApplication.Services.AddTransient<IEmailService, EmailService>();
+        webApplication.Services.AddTransient<ILateReturnOrLostFeeService, LateReturnOrLostFeeService>();
+        webApplication.Services.AddTransient<ILateReturnOrLostFeeMapper, LateReturnOrLostFeeMapper>();
         webApplication.Services.AddHttpContextAccessor();
 
 
@@ -121,12 +123,10 @@ public static class ServiceExtensions
                                 EnableSsl = true
                             });
 
-
         // Add DbContext
         webApplication.Services.AddDbContext<LibraryDbContext>(options =>
         {
             var connectionString = webApplication.Configuration.GetConnectionString("DefaultConnection");
-
             options.UseNpgsql(connectionString, npgsqlOptions =>
             {
                 npgsqlOptions.MapEnum<UserRole>("user_role");
@@ -134,10 +134,11 @@ public static class ServiceExtensions
                 npgsqlOptions.MapEnum<FineStatus>("fine_status");
                 npgsqlOptions.MapEnum<LoanStatus>("loan_status");
                 npgsqlOptions.MapEnum<ReservationStatus>("reservation_status");
+                npgsqlOptions.MapEnum<FineType>("fine_type");
             });
-
             options.UseSnakeCaseNamingConvention();
         });
+
         webApplication.Services.AddResponseCaching();
 
         //add routing

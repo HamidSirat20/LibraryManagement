@@ -42,17 +42,19 @@ public class Loan : BaseEntityWithId
     }
     public override string ToString() => $"Loan ID: {Id}, Book ID: {BookId}, Member ID: {UserId}, Loan Date: {LoanDate}, Due Date: {DueDate}, Return Date: {ReturnDate?.ToString() ?? "Not Returned"}";
 
-    public void CalculateLateFee()
+    public decimal CalculateLateFee()
     {
         DateTime endDate = ReturnDate ?? DateTime.UtcNow;
         if (endDate > DueDate)
         {
             var lateDays = (endDate - DueDate).Days;
             LateFee = lateDays * DailyLateFee;
+            return (decimal)LateFee;
         }
         else
         {
             LateFee = 0;
+            return (decimal)LateFee;
         }
     }
 }

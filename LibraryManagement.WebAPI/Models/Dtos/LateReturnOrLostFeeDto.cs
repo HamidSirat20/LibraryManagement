@@ -12,6 +12,11 @@ public class LateReturnOrLostFeeCreateDto
     [Required]
     [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater than zero.")]
     public decimal Amount { get; set; }
+    public DateTime IssuedDate { get; set; }
+
+    public FineStatus Status { get; set; }
+    public FineType FineType { get; set; }
+
 }
 
 public class LateReturnOrLostFeeUpdateDto
@@ -22,6 +27,7 @@ public class LateReturnOrLostFeeUpdateDto
     public DateTime? PaidDate { get; set; }
 
     public FineStatus? Status { get; set; }
+    public FineType? FineType { get; set; }
 }
 public class LateReturnOrLostFeeReadDto
 {
@@ -32,6 +38,7 @@ public class LateReturnOrLostFeeReadDto
 
     public Guid LoanId { get; set; }
     public string? BookTitle { get; set; }
+    public FineType FineType { get; set; }
 
     public decimal Amount { get; set; }
     public DateTime IssuedDate { get; set; }

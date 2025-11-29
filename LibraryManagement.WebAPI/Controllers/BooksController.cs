@@ -288,11 +288,7 @@ public class BooksController : ControllerBase
     /// [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> CreateBook([FromForm] BookCreateDto bookCreateDto)
     {
-        if (bookCreateDto == null)
-        {
-            _logger.LogDebug("BookCreateDto object sent from client is null.");
-            return BadRequest("BookCreateDto object is null");
-        }
+       
         if (!ModelState.IsValid)
         {
             _logger.LogDebug("Invalid model state for the BookCreateDto object");

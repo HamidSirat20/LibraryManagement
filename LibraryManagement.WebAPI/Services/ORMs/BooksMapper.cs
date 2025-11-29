@@ -127,12 +127,12 @@ public class BooksMapper : IBooksMapper
         )
         {
             BookAuthors = bookCreateDto.AuthorIds
+                .Distinct() 
                 .Select(authorId => new BookAuthor { AuthorId = authorId })
                 .ToList(),
             PublisherId = bookCreateDto.PublisherId
         };
     }
-
     public Book UpdateFromDto(Book book, BookUpdateDto bookUpdateDto)
     {
         if (bookUpdateDto == null) return book;

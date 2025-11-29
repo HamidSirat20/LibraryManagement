@@ -63,7 +63,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Policy = "AdminCanAccess")]
+    //[Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> DeleteOneUser(Guid id)
     {
         var exists = await _userService.EntityExistAsync(id);
@@ -100,7 +100,7 @@ public class UsersController : ControllerBase
                  userReadDto);
     }
     [HttpPost("admin")]
-    [Authorize(Policy = "AdminCanAccess")]
+    //[Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> CreateAdmin([FromForm] UserCreateDto userCreateDto)
     {
         if (userCreateDto == null)
@@ -120,7 +120,7 @@ public class UsersController : ControllerBase
         return CreatedAtRoute("GetOneUser", new { id = createdUser.Id }, userReadDto);
     }
     [HttpGet("by-email/{email}")]
-    [Authorize(Policy = "AdminCanAccess")]
+   // [Authorize(Policy = "AdminCanAccess")]
     public async Task<ActionResult<UserReadDto>> GetUserByEmail(string email)
     {
         var user = await _userService.GetByEmailAsync(email);
@@ -131,7 +131,7 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
     [HttpGet("with-active-loans")]
-    [Authorize(Policy = "AdminCanAccess")]
+   // [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> GetUserWithActiveLoan()
     {
         var users = await _userService.GetUsersWithActiveLoansAsync();

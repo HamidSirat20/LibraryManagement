@@ -1,4 +1,5 @@
 ﻿using System;
+using LibraryManagement.WebAPI.Models;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -12,10 +13,12 @@ namespace LibraryManagement.WebAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
-                .Annotation("Npgsql:Enum:fine_status", "pending,paid,waived")
-                .Annotation("Npgsql:Enum:genre", "fiction,non_fiction,mystery,science_fiction,fantasy,biography,history,romance,thriller,horror,other")
-                .Annotation("Npgsql:Enum:loan_status", "active,returned,overdue,renewed,lost,pending")
-                .Annotation("Npgsql:Enum:user_role", "user,admin");
+                .Annotation("Npgsql:Enum:fine_status", "cancelled,paid,pending,waived")
+                .Annotation("Npgsql:Enum:fine_type", "late_return,lost_item")
+                .Annotation("Npgsql:Enum:genre", "biography,fantasy,fiction,history,horror,mystery,non_fiction,other,romance,science_fiction,thriller")
+                .Annotation("Npgsql:Enum:loan_status", "active,lost,overdue,pending,returned")
+                .Annotation("Npgsql:Enum:reservation_status", "cancelled,fulfilled,notified,pending")
+                .Annotation("Npgsql:Enum:user_role", "admin,user");
 
             migrationBuilder.CreateTable(
                 name: "authors",
@@ -42,6 +45,7 @@ namespace LibraryManagement.WebAPI.Migrations
                     name = table.Column<string>(type: "text", nullable: false),
                     address = table.Column<string>(type: "text", nullable: false),
                     website = table.Column<string>(type: "text", nullable: false),
+                    email = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
@@ -61,8 +65,10 @@ namespace LibraryManagement.WebAPI.Migrations
                     password = table.Column<string>(type: "text", nullable: false),
                     phone = table.Column<string>(type: "text", nullable: false),
                     address = table.Column<string>(type: "text", nullable: false),
+                    salt = table.Column<byte[]>(type: "bytea", nullable: false),
                     avatar_url = table.Column<string>(type: "text", nullable: false),
-                    role = table.Column<int>(type: "user_role", nullable: false),
+                    public_id = table.Column<string>(type: "text", nullable: true),
+                    role = table.Column<UserRole>(type: "user_role", nullable: false),
                     membership_start_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     membership_end_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
@@ -81,8 +87,9 @@ namespace LibraryManagement.WebAPI.Migrations
                     title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: false),
                     cover_image_url = table.Column<string>(type: "text", nullable: false),
+                    cover_image_public_id = table.Column<string>(type: "text", nullable: true),
                     published_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    genre = table.Column<int>(type: "genre", nullable: false),
+                    genre = table.Column<Genre>(type: "genre", nullable: false),
                     pages = table.Column<int>(type: "integer", nullable: false),
                     publisher_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
@@ -136,7 +143,7 @@ namespace LibraryManagement.WebAPI.Migrations
                     loan_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     due_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     return_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    loan_status = table.Column<int>(type: "loan_status", nullable: false),
+                    loan_status = table.Column<LoanStatus>(type: "loan_status", nullable: false),
                     late_fee = table.Column<decimal>(type: "numeric", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
@@ -163,10 +170,12 @@ namespace LibraryManagement.WebAPI.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
+                    reserved_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
+                    pickup_deadline = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
+                    reservation_status = table.Column<ReservationStatus>(type: "reservation_status", nullable: false),
+                    queue_position = table.Column<int>(type: "integer", nullable: false),
                     book_id = table.Column<Guid>(type: "uuid", nullable: false),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    reservation_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
-                    status = table.Column<int>(type: "integer", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },
@@ -192,12 +201,13 @@ namespace LibraryManagement.WebAPI.Migrations
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    loan_id = table.Column<Guid>(type: "uuid", nullable: false),
                     amount = table.Column<decimal>(type: "numeric", nullable: false),
                     issued_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     paid_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
-                    status = table.Column<int>(type: "integer", nullable: false),
+                    status = table.Column<FineStatus>(type: "fine_status", nullable: false),
+                    fine_type = table.Column<FineType>(type: "fine_type", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    loan_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     updated_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true)
                 },

@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LibraryManagement.WebAPI.Migrations
 {
     [DbContext(typeof(LibraryDbContext))]
-    [Migration("20251026150830_AddedSaltToUser")]
-    partial class AddedSaltToUser
+    [Migration("20251128223916_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,13 +24,11 @@ namespace LibraryManagement.WebAPI.Migrations
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_status", new[] { "paid", "pending", "waived" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_status", new[] { "cancelled", "paid", "pending", "waived" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_type", new[] { "late_return", "lost_item" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "genre", new[] { "biography", "fantasy", "fiction", "history", "horror", "mystery", "non_fiction", "other", "romance", "science_fiction", "thriller" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "loan_status", new[] { "active", "lost", "overdue", "pending", "renewed", "returned" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "fine_status", new[] { "pending", "paid", "waived" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "genre", new[] { "fiction", "non_fiction", "mystery", "science_fiction", "fantasy", "biography", "history", "romance", "thriller", "horror", "other" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "loan_status", new[] { "active", "returned", "overdue", "renewed", "lost", "pending" });
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "public", "user_role", new[] { "user", "admin" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "loan_status", new[] { "active", "lost", "overdue", "pending", "returned" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "reservation_status", new[] { "cancelled", "fulfilled", "notified", "pending" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "user_role", new[] { "admin", "user" });
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
@@ -83,6 +81,10 @@ namespace LibraryManagement.WebAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("CoverImagePublicId")
+                        .HasColumnType("text")
+                        .HasColumnName("cover_image_public_id");
 
                     b.Property<string>("CoverImageUrl")
                         .IsRequired()
@@ -183,6 +185,10 @@ namespace LibraryManagement.WebAPI.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<FineType>("FineType")
+                        .HasColumnType("fine_type")
+                        .HasColumnName("fine_type");
 
                     b.Property<DateTime>("IssuedDate")
                         .HasColumnType("timestamp without time zone")
@@ -291,6 +297,11 @@ namespace LibraryManagement.WebAPI.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
@@ -326,13 +337,21 @@ namespace LibraryManagement.WebAPI.Migrations
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<DateTime>("ReservationDate")
+                    b.Property<DateTime?>("PickupDeadline")
                         .HasColumnType("timestamp without time zone")
-                        .HasColumnName("reservation_date");
+                        .HasColumnName("pickup_deadline");
 
-                    b.Property<LoanStatus>("Status")
-                        .HasColumnType("loan_status")
-                        .HasColumnName("status");
+                    b.Property<int>("QueuePosition")
+                        .HasColumnType("integer")
+                        .HasColumnName("queue_position");
+
+                    b.Property<ReservationStatus>("ReservationStatus")
+                        .HasColumnType("reservation_status")
+                        .HasColumnName("reservation_status");
+
+                    b.Property<DateTime>("ReservedAt")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("reserved_at");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp without time zone")
@@ -407,6 +426,10 @@ namespace LibraryManagement.WebAPI.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("phone");
+
+                    b.Property<string>("PublicId")
+                        .HasColumnType("text")
+                        .HasColumnName("public_id");
 
                     b.Property<UserRole>("Role")
                         .HasColumnType("user_role")
@@ -505,7 +528,7 @@ namespace LibraryManagement.WebAPI.Migrations
             modelBuilder.Entity("LibraryManagement.WebAPI.Models.Reservation", b =>
                 {
                     b.HasOne("LibraryManagement.WebAPI.Models.Book", "Book")
-                        .WithMany()
+                        .WithMany("Reservations")
                         .HasForeignKey("BookId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -533,6 +556,8 @@ namespace LibraryManagement.WebAPI.Migrations
                     b.Navigation("BookAuthors");
 
                     b.Navigation("Loans");
+
+                    b.Navigation("Reservations");
                 });
 
             modelBuilder.Entity("LibraryManagement.WebAPI.Models.Loan", b =>

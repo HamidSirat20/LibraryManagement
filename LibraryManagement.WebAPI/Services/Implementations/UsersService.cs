@@ -57,6 +57,10 @@ public class UsersService : IUsersService
         {
             _logger.LogInformation("Creating admin user with email {Email}", userCreateDto.Email);
 
+            //trim inputs for email and password
+            userCreateDto.Email = userCreateDto.Email?.Trim();
+            userCreateDto.Password = userCreateDto.Password?.Trim();
+
             var user = _userMapper.ToEntity(userCreateDto);
             //upload avatar if exists
             if (userCreateDto.File != null)
@@ -99,6 +103,10 @@ public class UsersService : IUsersService
         try
         {
             _logger.LogInformation("Creating user with email {Email}", userCreateDto.Email);
+            //trim inputs for email and password
+            userCreateDto.Email = userCreateDto.Email?.Trim();
+            userCreateDto.Password = userCreateDto.Password?.Trim();
+
             var user = _userMapper.ToEntity(userCreateDto);
             if (userCreateDto.File == null)
                     throw new BusinessRuleViolationException("User avatar is required.", "AVATAR_REQUIRED");
@@ -148,8 +156,8 @@ public class UsersService : IUsersService
                 _logger.LogWarning("User with ID {UserId} not found while attempting to delete", id);
                 throw new KeyNotFoundException($"User not found with {id} id.");
             }
-            _context.Users.Remove(user);
             await _imageService.DeleteImageAsync(user.PublicId!);
+            _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             _logger.LogInformation("User with ID {UserId} deleted successfully", id);
         }
@@ -172,11 +180,7 @@ public class UsersService : IUsersService
         try
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
-            if (user == null)
-            {
-                _logger.LogWarning($"{nameof(user)} is null.");
-                throw new KeyNotFoundException($"User with email {email} not found.");
-            }
+       
             return user;
         }
         catch (Exception ex)

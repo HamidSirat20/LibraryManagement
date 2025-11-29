@@ -27,30 +27,35 @@ public class LibraryDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
-        if (Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
-        {
-            modelBuilder.HasPostgresEnum<UserRole>("public", "user_role");
-            modelBuilder.HasPostgresEnum<Genre>("public", "genre");
-            modelBuilder.HasPostgresEnum<FineStatus>("public", "fine_status");
-            modelBuilder.HasPostgresEnum<LoanStatus>("public", "loan_status");
-            modelBuilder.HasPostgresEnum<ReservationStatus>("public", "reservation_status");
+        //if (Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL")
+        //{
+        //    modelBuilder.HasPostgresEnum<UserRole>("public", "user_role");
+        //    modelBuilder.HasPostgresEnum<Genre>("public", "genre");
+        //    modelBuilder.HasPostgresEnum<FineStatus>("public", "fine_status");
+        //    modelBuilder.HasPostgresEnum<LoanStatus>("public", "loan_status");
+        //    modelBuilder.HasPostgresEnum<ReservationStatus>("public", "reservation_status");
+        //    modelBuilder.HasPostgresEnum<FineType>("public", "fine_type");
 
-            modelBuilder.Entity<User>()
-                .Property(u => u.Role)
-                .HasColumnType("user_role");
+        //    modelBuilder.Entity<User>()
+        //        .Property(u => u.Role)
+        //        .HasColumnType("user_role");
 
-            modelBuilder.Entity<Book>()
-                .Property(b => b.Genre)
-                .HasColumnType("genre");
+        //    modelBuilder.Entity<Book>()
+        //        .Property(b => b.Genre)
+        //        .HasColumnType("genre");
 
-            modelBuilder.Entity<Loan>()
-                .Property(l => l.LoanStatus)
-                .HasColumnType("loan_status");
+        //    modelBuilder.Entity<Loan>()
+        //        .Property(l => l.LoanStatus)
+        //        .HasColumnType("loan_status");
 
-            modelBuilder.Entity<Reservation>()
-                .Property(l => l.ReservationStatus)
-                .HasColumnType("reservation_status");
-        }
+        //    modelBuilder.Entity<Reservation>()
+        //        .Property(l => l.ReservationStatus)
+        //        .HasColumnType("reservation_status");
+
+        //    modelBuilder.Entity<LateReturnOrLostFee>()
+        //        .Property(f => f.FineType)
+        //        .HasColumnType("fine_type");
+        //}
 
         base.OnModelCreating(modelBuilder);
     }

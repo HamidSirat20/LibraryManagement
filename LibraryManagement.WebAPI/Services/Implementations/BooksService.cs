@@ -53,15 +53,6 @@ public class BooksService : IBooksService
                 book.CoverImagePublicId = uploadResult.PublicId;
             }
 
-            // Associate authors
-            foreach (var authorId in bookCreateDto.AuthorIds)
-            {
-                book.BookAuthors.Add(new BookAuthor()
-                {
-                    AuthorId = authorId,
-                    BookId = book.Id
-                });
-            }
             _logger.LogDebug("Adding book to the database.");
             _dbContext.Books.Add(book);
             await SaveChangesAsync();
@@ -88,8 +79,8 @@ public class BooksService : IBooksService
                 _logger.LogError($"There was not found any book associated with {id} id");
                 throw new KeyNotFoundException($"Book with id {id} was not found.");
             }
-            _dbContext.Books.Remove(book);
             await _imageService.DeleteImageAsync(book.CoverImagePublicId!);
+            _dbContext.Books.Remove(book);
             return await SaveChangesAsync();
         }
         catch (Exception ex)
