@@ -4,6 +4,7 @@ public enum FineStatus
     Pending,
     Paid,
     Cancelled,
-    Waived
+    Waived,
+    Notified
 }
 

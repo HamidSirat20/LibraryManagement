@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace LibraryManagement.WebAPI.Models;
 
@@ -23,9 +24,8 @@ public class Loan : BaseEntityWithId
     public LoanStatus LoanStatus { get; set; } = LoanStatus.Active;
 
     public decimal? LateFee { get; set; }
-
+    [NotMapped]
     private const decimal DailyLateFee = 1.0m;
-
     // Navigation properties
     public User User { get; set; } = default!;
     public Book Book { get; set; } = default!;
@@ -44,10 +44,10 @@ public class Loan : BaseEntityWithId
 
     public decimal CalculateLateFee()
     {
-        DateTime endDate = ReturnDate ?? DateTime.UtcNow;
+        DateTime endDate = ReturnDate ?? DateTime.Now;
         if (endDate > DueDate)
         {
-            var lateDays = (endDate - DueDate).Days;
+            var lateDays = (endDate - DueDate).Seconds;
             LateFee = lateDays * DailyLateFee;
             return (decimal)LateFee;
         }
@@ -57,4 +57,5 @@ public class Loan : BaseEntityWithId
             return (decimal)LateFee;
         }
     }
+
 }

@@ -33,6 +33,18 @@ public class LoansService : ILoansService
             loanCreateDto.BookId);
         try
         {
+            // Check membership validity
+           var user = await _context.Users
+          .AsNoTracking()
+          .FirstOrDefaultAsync(u => u.Id == userId)
+          ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
+
+            if (!user.IsActive)
+            {
+                throw new BusinessRuleViolationException(
+                    "Your membership has expired. Please renew before borrowing books.",
+                    "MEMBERSHIP_EXPIRED");
+            }
 
             var book = await _context.Books
                 .AsNoTracking()
@@ -44,7 +56,7 @@ public class LoansService : ILoansService
             if (!book.IsAvailable)
             {
                 _logger.LogWarning("The requested book is currently unavailable. Suggesting reservation option.");
-                throw new InvalidOperationException(
+                throw new BusinessRuleViolationException(
                     $"Book with ID {loanCreateDto.BookId} is currently unavailable for loan.You may place a reservation to be notified when it becomes available."
                 );
             }
@@ -53,8 +65,8 @@ public class LoansService : ILoansService
             {
                 UserId = userId,
                 BookId = loanCreateDto.BookId,
-                LoanDate = DateTime.UtcNow,
-                DueDate = DateTime.UtcNow.AddDays(30),
+                LoanDate = DateTime.Now,
+                DueDate = DateTime.Now.AddSeconds(30),
                 ReturnDate = null,
                 LoanStatus = LoanStatus.Active
             };
@@ -72,6 +84,14 @@ public class LoansService : ILoansService
 
             _logger.LogDebug("Created new loan with ID: {LoanId}", loan.Id);
             return loanReadDto;
+        }
+        catch (BusinessRuleViolationException)
+        {
+            throw;
+        }
+        catch (KeyNotFoundException)
+        {
+            throw;
         }
         catch (Exception ex)
         {
@@ -213,7 +233,7 @@ public class LoansService : ILoansService
         try
         {
             var overdueLoans = await _context.Loans
-            .Where(l => l.DueDate < DateTime.UtcNow && l.LoanStatus == LoanStatus.Active)
+            .Where(l => l.DueDate < DateTime.Now && l.LoanStatus == LoanStatus.Active)
             .Include(l => l.User)
             .Include(l => l.Book)
             .AsNoTracking()
@@ -221,7 +241,7 @@ public class LoansService : ILoansService
 
             if (!overdueLoans.Any())
             {
-                _logger.LogInformation("No overdue loans found at {Time}.", DateTime.UtcNow);
+                _logger.LogInformation("No overdue loans found at {Time}.", DateTime.Now);
                 return Enumerable.Empty<Loan>();
             }
 
@@ -234,7 +254,6 @@ public class LoansService : ILoansService
             throw;
         }
     }
-
     public async Task<Loan> ReturnBookAsync(Guid loanId)
     {
         if (loanId == Guid.Empty)
@@ -250,24 +269,26 @@ public class LoansService : ILoansService
 
             // Update loan status to Returned and set return date
             returnLoan.LoanStatus = LoanStatus.Returned;
-            returnLoan.ReturnDate = DateTime.UtcNow;
+            returnLoan.ReturnDate = DateTime.Now;
 
             // Calculate late fee if applicable and create a LateReturnOrLostFee
-            if (returnLoan.CalculateLateFee() > 0)
+            var endDate = returnLoan.ReturnDate ?? DateTime.Now;
+            var lateDays = (endDate - returnLoan.DueDate).Days;
+            var fee = returnLoan.CalculateLateFee();
+
+            if (fee > 0)
             {
-                var lateFee = new LateReturnOrLostFeeCreateDto
+                var lateFee = new LateReturnFineInternalDto
                 {
                     LoanId = returnLoan.Id,
-                    Amount = returnLoan.CalculateLateFee(),
-                    Status = FineStatus.Pending,
                     UserId = returnLoan.UserId,
-                    IssuedDate = DateTime.UtcNow,
-                    FineType = FineType.LateReturn
+                    Amount = fee,
+                    Description = $"Late return fee for loan {returnLoan.Book.Title}, {lateDays} day(s) late."
                 };
-                await _lateReturnOrLostFeeService.CreateFineAsync(lateFee);
+
+                await _lateReturnOrLostFeeService.CreateLateFineAsync(lateFee);
             }
 
-            await _context.SaveChangesAsync();
             _logger.LogInformation("Loan with id {loanId} returned.", loanId);
 
             // Find the next reservation in queue for this book
@@ -286,7 +307,8 @@ public class LoansService : ILoansService
                  nextReservation.Book.Title, DateTime.Now.AddDays(3));
                 await _reservationQueueService.ProcessNextReservationAfterReturnAsync(nextReservation.BookId, "Your reservation is ready for pickup.", emailBody);
             }
-
+            _context.Loans.Update(returnLoan);
+            await _context.SaveChangesAsync();
             return returnLoan;
         }
         catch (Exception ex)
@@ -300,21 +322,34 @@ public class LoansService : ILoansService
     {
         try
         {
+
             var loanToUpdate = await GetLoanByIdAsync(loanId);
 
-            // Check if reservation for the book exists
-            var reservation = await _context.Reservations
-                .Where(r => r.BookId == loanToUpdate.BookId && r.ReservationStatus == ReservationStatus.Pending)
-                .OrderBy(r => r.ReservedAt)
-                .ToListAsync();
+            // Check membership validity
+            var user = loanToUpdate.User ?? throw new KeyNotFoundException($"User with ID {loanToUpdate.UserId} not found.");
 
-            // Check if there are any active reservations for the book
-            bool hasActiveReservation = reservation.Any(r =>
-                                        r.ReservationStatus == ReservationStatus.Pending ||
-                                        r.ReservationStatus == ReservationStatus.Notified);
+            if (!user.IsActive)
+            {
+                throw new BusinessRuleViolationException(
+                    "Your membership has expired. Please renew before borrowing books.",
+                    "MEMBERSHIP_EXPIRED");
+            }
+            // Cannot extend overdue loans
+            if (loanToUpdate.LoanStatus == LoanStatus.Overdue)
+            {
+                throw new BusinessRuleViolationException(
+                    "You cannot extend this loan because it is already overdue.",
+                    "LOAN_OVERDUE");
+            }
+            // Check if reservation for the book exists
+            bool hasActiveReservation = await _context.Reservations
+                .AnyAsync(r =>
+                    r.BookId == loanToUpdate.BookId &&
+                    (r.ReservationStatus == ReservationStatus.Pending ||
+                     r.ReservationStatus == ReservationStatus.Notified));
             if (hasActiveReservation)
             {
-                _logger.LogWarning("Loan with {loan.Id} does not exist!", loanToUpdate.Id);
+                _logger.LogWarning("Loan with {loan.Id} cannot be extended!", loanToUpdate.Id);
                 throw new InvalidOperationException("You can not extend this book since it is reserved by someone.");
             }
             // Extend the due date by 30 days
@@ -322,12 +357,19 @@ public class LoansService : ILoansService
             await _context.SaveChangesAsync();
             return loanToUpdate;
         }
+        catch (BusinessRuleViolationException)
+        {
+            throw;
+        }
+        catch (KeyNotFoundException)
+        {
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating loan with ID {LoanId}", loanId);
             throw;
         }
-
     }
 
 }

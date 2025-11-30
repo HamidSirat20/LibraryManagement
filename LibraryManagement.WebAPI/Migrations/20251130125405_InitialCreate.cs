@@ -13,7 +13,8 @@ namespace LibraryManagement.WebAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
-                .Annotation("Npgsql:Enum:fine_status", "cancelled,paid,pending,waived")
+                .Annotation("Npgsql:Enum:book_status", "available,damaged,lost,removed,under_repair")
+                .Annotation("Npgsql:Enum:fine_status", "cancelled,notified,paid,pending,waived")
                 .Annotation("Npgsql:Enum:fine_type", "late_return,lost_item")
                 .Annotation("Npgsql:Enum:genre", "biography,fantasy,fiction,history,horror,mystery,non_fiction,other,romance,science_fiction,thriller")
                 .Annotation("Npgsql:Enum:loan_status", "active,lost,overdue,pending,returned")
@@ -90,6 +91,7 @@ namespace LibraryManagement.WebAPI.Migrations
                     cover_image_public_id = table.Column<string>(type: "text", nullable: true),
                     published_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     genre = table.Column<Genre>(type: "genre", nullable: false),
+                    book_status = table.Column<BookStatus>(type: "book_status", nullable: false),
                     pages = table.Column<int>(type: "integer", nullable: false),
                     publisher_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
@@ -206,6 +208,7 @@ namespace LibraryManagement.WebAPI.Migrations
                     paid_date = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),
                     status = table.Column<FineStatus>(type: "fine_status", nullable: false),
                     fine_type = table.Column<FineType>(type: "fine_type", nullable: false),
+                    description = table.Column<string>(type: "text", nullable: true),
                     user_id = table.Column<Guid>(type: "uuid", nullable: false),
                     loan_id = table.Column<Guid>(type: "uuid", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp without time zone", nullable: true),

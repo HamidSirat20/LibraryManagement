@@ -7,6 +7,7 @@ public class LateReturnOrLostFee : BaseEntityWithId
     public DateTime? PaidDate { get; set; }
     public FineStatus Status { get; set; } = FineStatus.Pending;
     public FineType FineType { get; set; } = FineType.LateReturn;
+    public string? Description { get; set; }
 
     // Navigation properties
     public Guid UserId { get; set; }

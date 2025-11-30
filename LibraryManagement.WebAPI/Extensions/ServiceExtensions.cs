@@ -13,6 +13,7 @@ using Newtonsoft.Json.Converters;
 using Serilog;
 using System.Net;
 using System.Net.Mail;
+using System.Text;
 
 namespace LibraryManagement.WebAPI.Extensions;
 public static class ServiceExtensions
@@ -109,6 +110,8 @@ public static class ServiceExtensions
         webApplication.Services.AddTransient<ILateReturnOrLostFeeMapper, LateReturnOrLostFeeMapper>();
         webApplication.Services.AddHttpContextAccessor();
 
+        // Add Background Services
+        webApplication.Services.AddHostedService<NotificationBackgroundService>();
 
         // Add Email service
         webApplication.Services
@@ -135,6 +138,7 @@ public static class ServiceExtensions
                 npgsqlOptions.MapEnum<LoanStatus>("loan_status");
                 npgsqlOptions.MapEnum<ReservationStatus>("reservation_status");
                 npgsqlOptions.MapEnum<FineType>("fine_type");
+                npgsqlOptions.MapEnum<BookStatus>("book_status");
             });
             options.UseSnakeCaseNamingConvention();
         });
@@ -152,29 +156,32 @@ public static class ServiceExtensions
 
         // Add Authentication
         webApplication.Services.AddAuthentication("Bearer")
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new()
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = webApplication.Configuration["Authentication:issuer"],
-                    ValidAudience = webApplication.Configuration["Authentication:audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.Unicode.GetBytes(webApplication.Configuration["Authentication:secretKey"])),
-                };
-            });
+         .AddJwtBearer(options =>
+         {
+             options.TokenValidationParameters = new TokenValidationParameters
+             {
+                 ValidateIssuer = true,
+                 ValidateAudience = true,
+                 ValidateLifetime = true,
+                 ValidateIssuerSigningKey = true,
+                 ValidIssuer = webApplication.Configuration["Authentication:issuer"],
+                 ValidAudience = webApplication.Configuration["Authentication:audience"],
+                 IssuerSigningKey = new SymmetricSecurityKey(
+                     Encoding.UTF8.GetBytes(webApplication.Configuration["Authentication:secretKey"])
+                 ),
+                 RoleClaimType = "role"
+             };
+         });
 
-        webApplication.Services.AddAuthorization(option =>
+        webApplication.Services.AddAuthorization(options =>
         {
-            option.AddPolicy("AdminCanAccess", policy =>
+            options.AddPolicy("AdminCanAccess", policy =>
             {
                 policy.RequireAuthenticatedUser();
-                policy.RequireRole("role", "Admin");
-
+                policy.RequireRole("Admin");
             });
         });
+
 
         //add versioning
         webApplication.Services.AddApiVersioning(options =>

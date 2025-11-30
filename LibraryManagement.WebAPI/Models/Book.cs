@@ -17,12 +17,15 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
     [DataType(DataType.Date)]
     public DateTime PublishedDate { get; set; }
     public Genre Genre { get; set; }
+    public BookStatus BookStatus { get; set; } = BookStatus.Available;
     public int Pages { get; set; }
 
-    public bool IsAvailable => !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
-                           && !Reservations.Any(r => r.ReservationStatus == ReservationStatus.Pending);
-    public bool IsAvailableForPickUp => !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
-                       && Reservations.Any(r => r.ReservationStatus == ReservationStatus.Notified);
+    public bool IsAvailable => BookStatus == BookStatus.Available &&
+                              !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
+                               && !Reservations.Any(r => r.ReservationStatus == ReservationStatus.Pending);
+    public bool IsAvailableForPickUp => BookStatus == BookStatus.Available &&
+                                        !Loans.Any(l => l.LoanStatus == LoanStatus.Active || l.LoanStatus == LoanStatus.Overdue)
+                                        && Reservations.Any(r => r.ReservationStatus == ReservationStatus.Notified);
 
     [Required]
     public IList<BookAuthor> BookAuthors { get; set; } = new List<BookAuthor>();
@@ -31,7 +34,7 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
     public Guid PublisherId { get; set; }
     public Publisher Publisher { get; set; } = default!;
 
-    public Book(){}
+    public Book() { }
     public Book(string title, string description, DateTime publishedDate, Genre genre, int pages)
     {
         Title = title;

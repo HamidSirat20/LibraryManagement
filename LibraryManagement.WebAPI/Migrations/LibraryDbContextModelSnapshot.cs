@@ -21,7 +21,8 @@ namespace LibraryManagement.WebAPI.Migrations
                 .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_status", new[] { "cancelled", "paid", "pending", "waived" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "book_status", new[] { "available", "damaged", "lost", "removed", "under_repair" });
+            NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_status", new[] { "cancelled", "notified", "paid", "pending", "waived" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "fine_type", new[] { "late_return", "lost_item" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "genre", new[] { "biography", "fantasy", "fiction", "history", "horror", "mystery", "non_fiction", "other", "romance", "science_fiction", "thriller" });
             NpgsqlModelBuilderExtensions.HasPostgresEnum(modelBuilder, "loan_status", new[] { "active", "lost", "overdue", "pending", "returned" });
@@ -78,6 +79,10 @@ namespace LibraryManagement.WebAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<BookStatus>("BookStatus")
+                        .HasColumnType("book_status")
+                        .HasColumnName("book_status");
 
                     b.Property<string>("CoverImagePublicId")
                         .HasColumnType("text")
@@ -182,6 +187,10 @@ namespace LibraryManagement.WebAPI.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("timestamp without time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
 
                     b.Property<FineType>("FineType")
                         .HasColumnType("fine_type")

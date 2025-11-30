@@ -25,7 +25,8 @@ public class LateReturnOrLostFeeMapper : ILateReturnOrLostFeeMapper
             Amount = fee.Amount,
             IssuedDate = fee.IssuedDate,
             PaidDate = fee.PaidDate,
-            Status = fee.Status
+            Status = fee.Status,
+            Description = fee.Description
         };
     }
 

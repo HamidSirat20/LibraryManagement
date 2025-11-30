@@ -18,6 +18,8 @@ public class User : BaseEntityWithId
     public UserRole Role { get; set; } = UserRole.User;
     public DateTime MembershipStartDate { get; set; }
     public DateTime MembershipEndDate { get; set; }
+    [NotMapped]
+    public bool IsActive => MembershipEndDate > DateTime.Now;
 
     // Navigation properties
     public List<Loan> Loans { get; set; } = new();
@@ -35,7 +37,6 @@ public class User : BaseEntityWithId
         MembershipStartDate = membershipStartDate;
         MembershipEndDate = membershipEndDate;
     }
-
     public override string ToString() => $"{FirstName} {LastName} ({Email}) - {Phone}";
 
 }

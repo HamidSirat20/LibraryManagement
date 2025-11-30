@@ -41,6 +41,11 @@ public class LoansController : ControllerBase
 
             return CreatedAtAction("GetLoanById", new { id = loanDto.Id }, loanDto);
         }
+        catch(BusinessRuleViolationException ex)
+        {
+            _logger.LogWarning(ex, "Business rule violation while making loan");
+            return BadRequest(new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred while making loan");

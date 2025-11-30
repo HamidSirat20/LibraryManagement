@@ -33,6 +33,18 @@ public class ReservationService : IReservationService
     {
         try
         {
+            // Check membership validity
+            var user = await _context.Users
+           .AsNoTracking()
+           .FirstOrDefaultAsync(u => u.Id == userId)
+           ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
+
+            if (!user.IsActive)
+            {
+                throw new BusinessRuleViolationException(
+                    "Your membership has expired. Please renew before borrowing books.",
+                    "MEMBERSHIP_EXPIRED");
+            }
             var book = await _context.Books
                             .Include(l => l.Loans)
                             .Include(r => r.Reservations)
@@ -152,6 +164,18 @@ public class ReservationService : IReservationService
     {
         try
         {
+            // Check membership validity
+            var user = await _context.Users
+           .AsNoTracking()
+           .FirstOrDefaultAsync(u => u.Id == currentUserId)
+           ?? throw new KeyNotFoundException($"User with ID {currentUserId} not found.");
+
+            if (!user.IsActive)
+            {
+                throw new BusinessRuleViolationException(
+                    "Your membership has expired. Please renew before borrowing books.",
+                    "MEMBERSHIP_EXPIRED");
+            }
             var reservation = await _context.Reservations.Include(u => u.User).FirstOrDefaultAsync(r => r.Id == reservationId);
             if (reservation == null)
             {
