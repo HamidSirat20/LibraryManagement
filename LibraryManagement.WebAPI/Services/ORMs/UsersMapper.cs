@@ -37,7 +37,7 @@ public  class UsersMapper : IUsersMapper
             phone: userCreateDto.Phone,
             address: userCreateDto.Address,     
             membershipStartDate: DateTime.UtcNow,
-            membershipEndDate: DateTime.UtcNow.AddYears(1)
+            membershipEndDate: DateTime.UtcNow.AddYears(5)
         )
         {
             Password = userCreateDto.Password

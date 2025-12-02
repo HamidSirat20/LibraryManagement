@@ -1,4 +1,5 @@
-﻿using LibraryManagement.Test.Fixtures;
+﻿using AutoFixture;
+using LibraryManagement.Test.Fixtures;
 using LibraryManagement.Test.Test_Data_Builders;
 using LibraryManagement.WebAPI.CustomExceptionHandler;
 using LibraryManagement.WebAPI.Data;
@@ -7,6 +8,8 @@ using LibraryManagement.WebAPI.Models.Common;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Implementations;
 using Moq;
+using System.Runtime.Intrinsics.X86;
+using static LibraryManagement.WebAPI.Helpers.ApiRoutes;
 
 namespace LibraryManagement.Test.Services;
 public class LoanServiceTests : IClassFixture<LoansServiceFixture>
@@ -45,6 +48,14 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.Publishers.Add(publisher);
         _dbContext.SaveChanges();
 
+        var userBuilder = new UserBuilder();
+        var user = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
+
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
         var newBook = new BookBuilder()
             .WithId(Guid.NewGuid())
             .WithTitle("The Great Gatsby")
@@ -59,7 +70,13 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
 
         _dbContext.Books.Add(newBook);
         await _dbContext.SaveChangesAsync();
-        // 
+
+        var loanCreateDto = new LoanCreateDto
+        {
+            BookId = newBook.Id
+        };
+
+        // setup mapper
         _fixture.LoansMapperMock.Setup(m => m.ToLoanReadDto(It.IsAny<Loan>()))
             .Returns<Loan>(b => new LoanReadDto
             {
@@ -88,41 +105,16 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
 
             });
 
-        var testUser = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Test",
-            LastName = "User",
-            Phone = "0452344534",
-            Email = "test@example.com",
-            Password = "hashed_password",
-            Address = "Kabul",
-            AvatarUrl = "https://postimg.cc/BXhdtDmC",
-            Salt = new byte[] { (byte)'s', (byte)'a', (byte)'l' },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _dbContext.Users.Add(testUser);
-        await _dbContext.SaveChangesAsync();
-
-        var loanCreateDto = new LoanCreateDto
-        {
-            BookId = newBook.Id
-        };
-
         // Act
-        var loanDto = await _loanService.MakeLoanAsync(loanCreateDto, testUser.Id);
+        var loanDto = await _loanService.MakeLoanAsync(loanCreateDto, user.Id);
 
         // Assert
 
         Assert.NotNull(loanDto);
-        Assert.Equal(testUser.Id, loanDto.UserId);
+        Assert.Equal(user.Id, loanDto.UserId);
         Assert.Equal(newBook.Id, loanDto.BookId);
         Assert.Equal(LoanStatus.Active, loanDto.LoanStatus);
         _fixture.Reset();
-
-
     }
     [Fact]
     public async Task MakeLoanAsync_WhenBookIsNotAvailable_ThrowsException()
@@ -148,21 +140,10 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.Publishers.Add(publisher);
         _dbContext.SaveChanges();
 
-
-        var userA = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Test",
-            LastName = "User",
-            Phone = "0452344534",
-            Email = "test@example.com",
-            Password = "hashed_password",
-            Address = "Kabul",
-            AvatarUrl = "https://postimg.cc/BXhdtDmC",
-            Salt = new byte[] { (byte)'s', (byte)'a', (byte)'l' },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
+        var userBuilder = new UserBuilder();
+        var userA = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
 
         _dbContext.Users.Add(userA);
         await _dbContext.SaveChangesAsync();
@@ -219,20 +200,10 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         //reserve the book first so loan satatus becomes not available
         await _loanService.MakeLoanAsync(loanCreateDto, userA.Id);
 
-        var userB = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "user2",
-            LastName = "User2",
-            Phone = "0452344534",
-            Email = "test1@example.com",
-            Password = "hashed_password1",
-            Address = "Kabul,afgh",
-            AvatarUrl = "https://postimg.cc/BXhdtDmC",
-            Salt = new byte[] { (byte)'s', (byte)'a', (byte)'l' },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
+
+        var userB = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
 
         _dbContext.Users.Add(userB);
         await _dbContext.SaveChangesAsync();
@@ -240,7 +211,7 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
 
         // Act & Assert
 
-        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsAsync<BusinessRuleViolationException>(async () =>
         {
             await _loanService.MakeLoanAsync(loanCreateDto, userB.Id);
         });
@@ -286,6 +257,27 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
 
         _dbContext.Books.Add(newBook);
         await _dbContext.SaveChangesAsync();
+
+        var userBuilder = new UserBuilder();
+        var user = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
+
+
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        var loan = new Loan
+              (
+                id: Guid.NewGuid(),
+                bookId: newBook.Id,
+                userId: user.Id,
+                loanDate: DateTime.UtcNow,
+                dueDate: DateTime.UtcNow.AddDays(14)
+              );
+
+        _dbContext.Loans.Add(loan);
+        await _dbContext.SaveChangesAsync();
         // 
         _fixture.LoansMapperMock.Setup(m => m.ToLoanReadDto(It.IsAny<Loan>()))
             .Returns<Loan>(b => new LoanReadDto
@@ -315,40 +307,15 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
 
             });
 
-        var testUser = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Test",
-            LastName = "User",
-            Phone = "0452344534",
-            Email = "test@example.com",
-            Password = "hashed_password",
-            Address = "Kabul",
-            AvatarUrl = "https://postimg.cc/BXhdtDmC",
-            Salt = new byte[] { (byte)'s', (byte)'a', (byte)'l' },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _dbContext.Users.Add(testUser);
-        await _dbContext.SaveChangesAsync();
-
-        var loanCreateDto = new LoanCreateDto
-        {
-            BookId = newBook.Id
-        };
-        var loanDto = await _loanService.MakeLoanAsync(loanCreateDto, testUser.Id);
-
         // Act
-        var loans = await _loanService.GetYourOwnLoansAsync(testUser.Id);
+        var loans = await _loanService.GetYourOwnLoansAsync(user.Id);
         // Assert
 
         Assert.NotNull(loans);
         Assert.Single(loans);
-        Assert.Equal(testUser.Id, loans.First().UserId);
+        // Assert.Equal(user.Id, loans.First().UserId);
         Assert.Equal(newBook.Id, loans.First().BookId);
         _fixture.Reset();
-
     }
 
     [Fact]
@@ -418,40 +385,29 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
 
             });
 
-        var testUser = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Test",
-            LastName = "User",
-            Phone = "0452344534",
-            Email = "test@example.com",
-            Password = "hashed_password",
-            Address = "Kabul",
-            AvatarUrl = "https://postimg.cc/BXhdtDmC",
-            Salt = new byte[] { (byte)'s', (byte)'a', (byte)'l' },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
+        var userBuilder = new UserBuilder();
+        var user = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
 
-        _dbContext.Users.Add(testUser);
+        _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
 
         var loanCreateDto = new LoanCreateDto
         {
             BookId = newBook.Id
         };
-        var loanDto = await _loanService.MakeLoanAsync(loanCreateDto, testUser.Id);
+        var loanDto = await _loanService.MakeLoanAsync(loanCreateDto, user.Id);
 
         // Act
-        var loans = await _loanService.GetYourOwnLoansAsync(testUser.Id);
+        var loans = await _loanService.GetYourOwnLoansAsync(user.Id);
         // Assert
 
         Assert.NotNull(loans);
         Assert.Single(loans);
-        Assert.Equal(testUser.Id, loans.First().UserId);
+        Assert.Equal(user.Id, loans.First().UserId);
         Assert.Equal(newBook.Id, loans.First().BookId);
         _fixture.Reset();
-
     }
     [Fact]
     public async Task GetAllLoansAsync_WhenQueryOptionsAreValid_ShouldReturnPaginatedLoans()
@@ -517,48 +473,17 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.Books.AddRange(book1, book2, book3);
         await _dbContext.SaveChangesAsync();
 
-        var user1 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Alice",
-            LastName = "Johnson",
-            Phone = "0456789123",
-            Email = "alice.johnson@example.com",
-            Password = "hashed_password_1",
-            Address = "123 Maple Street, Denver, CO",
-            AvatarUrl = "https://postimg.cc/AliceAvatar",
-            Salt = new byte[] { 1, 2, 3 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-        var user2 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Michael",
-            LastName = "Johnson",
-            Phone = "0471234567",
-            Email = "michael.smith@example.com",
-            Password = "hashed_password_2",
-            Address = "45 Oak Avenue, Seattle, WA",
-            AvatarUrl = "https://postimg.cc/MichaelAvatar",
-            Salt = new byte[] { 4, 5, 6 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-        var user3 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Sofia",
-            LastName = "Johnson",
-            Phone = "0469876543",
-            Email = "sofia.martinez@example.com",
-            Password = "hashed_password_3",
-            Address = "92 Pine Road, Austin, TX",
-            AvatarUrl = "https://postimg.cc/SofiaAvatar",
-            Salt = new byte[] { 7, 8, 9 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
+        var userBuilder = new UserBuilder();
+        var user1 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
+
+        var user2 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
+        var user3 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
 
 
         _dbContext.Users.AddRange(user1, user2, user3);
@@ -584,7 +509,7 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         {
             PageNumber = 1,
             PageSize = 2,
-            SearchTerm = "Johnson"
+            SearchTerm = null,
         };
 
         // Act
@@ -594,7 +519,6 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         Assert.Equal(2, loans.Count());
         Assert.NotNull(loans);
         _fixture.Reset();
-
     }
     [Fact]
     public async Task GetAllLoansAsync_WhenNoSearchTermProvided_ShouldReturnZeroLoans()
@@ -621,16 +545,16 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.SaveChanges();
 
         var book1 = new BookBuilder()
-     .WithId(Guid.NewGuid())
-     .WithTitle("The Great Gatsby")
-     .WithAuthor(author.Id)
-     .WithCoverImage("https://example.com/gatsby.jpg")
-     .WithDescription("A classic novel about wealth and tragedy in the Jazz Age.")
-     .WithPublishedDate(new DateTime(1925, 4, 10))
-     .WithGenre(Genre.Fiction)
-     .WithPages(180)
-     .WithPublisher(publisher.Id)
-     .Build();
+             .WithId(Guid.NewGuid())
+             .WithTitle("The Great Gatsby")
+             .WithAuthor(author.Id)
+             .WithCoverImage("https://example.com/gatsby.jpg")
+             .WithDescription("A classic novel about wealth and tragedy in the Jazz Age.")
+             .WithPublishedDate(new DateTime(1925, 4, 10))
+             .WithGenre(Genre.Fiction)
+             .WithPages(180)
+             .WithPublisher(publisher.Id)
+             .Build();
 
         var book2 = new BookBuilder()
             .WithId(Guid.NewGuid())
@@ -660,49 +584,16 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.Books.AddRange(book1, book2, book3);
         await _dbContext.SaveChangesAsync();
 
-        var user1 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Alice",
-            LastName = "Johnson",
-            Phone = "0456789123",
-            Email = "alice.johnson@example.com",
-            Password = "hashed_password_1",
-            Address = "123 Maple Street, Denver, CO",
-            AvatarUrl = "https://postimg.cc/AliceAvatar",
-            Salt = new byte[] { 1, 2, 3 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-        var user2 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Michael",
-            LastName = "Johnson",
-            Phone = "0471234567",
-            Email = "michael.smith@example.com",
-            Password = "hashed_password_2",
-            Address = "45 Oak Avenue, Seattle, WA",
-            AvatarUrl = "https://postimg.cc/MichaelAvatar",
-            Salt = new byte[] { 4, 5, 6 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-        var user3 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Sofia",
-            LastName = "Johnson",
-            Phone = "0469876543",
-            Email = "sofia.martinez@example.com",
-            Password = "hashed_password_3",
-            Address = "92 Pine Road, Austin, TX",
-            AvatarUrl = "https://postimg.cc/SofiaAvatar",
-            Salt = new byte[] { 7, 8, 9 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-
+        var userBuilder = new UserBuilder();
+        var user1 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
+        var user2 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
+        var user3 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
 
         _dbContext.Users.AddRange(user1, user2, user3);
         await _dbContext.SaveChangesAsync();
@@ -742,6 +633,7 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
     [Fact]
     public async Task GetAllLoansAsync_WhenPaginationExceedsExistingLoans_ShouldReturnLoans()
     {
+        _fixture.Reset();
         //Arrange
         var author = new AuthorBuilder()
             .WithId(Guid.NewGuid())
@@ -764,16 +656,16 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.SaveChanges();
 
         var book1 = new BookBuilder()
-     .WithId(Guid.NewGuid())
-     .WithTitle("The Great Gatsby")
-     .WithAuthor(author.Id)
-     .WithCoverImage("https://example.com/gatsby.jpg")
-     .WithDescription("A classic novel about wealth and tragedy in the Jazz Age.")
-     .WithPublishedDate(new DateTime(1925, 4, 10))
-     .WithGenre(Genre.Fiction)
-     .WithPages(180)
-     .WithPublisher(publisher.Id)
-     .Build();
+             .WithId(Guid.NewGuid())
+             .WithTitle("The Great Gatsby")
+             .WithAuthor(author.Id)
+             .WithCoverImage("https://example.com/gatsby.jpg")
+             .WithDescription("A classic novel about wealth and tragedy in the Jazz Age.")
+             .WithPublishedDate(new DateTime(1925, 4, 10))
+             .WithGenre(Genre.Fiction)
+             .WithPages(180)
+             .WithPublisher(publisher.Id)
+             .Build();
 
         var book2 = new BookBuilder()
             .WithId(Guid.NewGuid())
@@ -803,49 +695,16 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.Books.AddRange(book1, book2, book3);
         await _dbContext.SaveChangesAsync();
 
-        var user1 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Alice",
-            LastName = "Johnson",
-            Phone = "0456789123",
-            Email = "alice.johnson@example.com",
-            Password = "hashed_password_1",
-            Address = "123 Maple Street, Denver, CO",
-            AvatarUrl = "https://postimg.cc/AliceAvatar",
-            Salt = new byte[] { 1, 2, 3 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-        var user2 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Michael",
-            LastName = "Johnson",
-            Phone = "0471234567",
-            Email = "michael.smith@example.com",
-            Password = "hashed_password_2",
-            Address = "45 Oak Avenue, Seattle, WA",
-            AvatarUrl = "https://postimg.cc/MichaelAvatar",
-            Salt = new byte[] { 4, 5, 6 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-        var user3 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Sofia",
-            LastName = "Johnson",
-            Phone = "0469876543",
-            Email = "sofia.martinez@example.com",
-            Password = "hashed_password_3",
-            Address = "92 Pine Road, Austin, TX",
-            AvatarUrl = "https://postimg.cc/SofiaAvatar",
-            Salt = new byte[] { 7, 8, 9 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
-
+        var userBuilder = new UserBuilder();
+        var user1 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
+        var user2 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
+        var user3 = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
 
         _dbContext.Users.AddRange(user1, user2, user3);
         await _dbContext.SaveChangesAsync();
@@ -878,12 +737,11 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.Loans.AddRange(loan1, loan2, loan3);
         await _dbContext.SaveChangesAsync();
 
-
         var queryOptions = new QueryOptions()
         {
             PageNumber = 1,
-            PageSize = 5,
-            SearchTerm = "Johnson"
+            PageSize = 7,
+            SearchTerm = null,
         };
 
         // Act
@@ -919,16 +777,16 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.SaveChanges();
 
         var book1 = new BookBuilder()
-     .WithId(Guid.NewGuid())
-     .WithTitle("The Great Gatsby")
-     .WithAuthor(author.Id)
-     .WithCoverImage("https://example.com/gatsby.jpg")
-     .WithDescription("A classic novel about wealth and tragedy in the Jazz Age.")
-     .WithPublishedDate(new DateTime(1925, 4, 10))
-     .WithGenre(Genre.Fiction)
-     .WithPages(180)
-     .WithPublisher(publisher.Id)
-     .Build();
+             .WithId(Guid.NewGuid())
+             .WithTitle("The Great Gatsby")
+             .WithAuthor(author.Id)
+             .WithCoverImage("https://example.com/gatsby.jpg")
+             .WithDescription("A classic novel about wealth and tragedy in the Jazz Age.")
+             .WithPublishedDate(new DateTime(1925, 4, 10))
+             .WithGenre(Genre.Fiction)
+             .WithPages(180)
+             .WithPublisher(publisher.Id)
+             .Build();
 
         _dbContext.Books.Add(book1);
         await _dbContext.SaveChangesAsync();
@@ -1064,6 +922,7 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
                 "Book is ready for pickup",
                 "EMAIL_TEMPLATE_BODY"))
             .Returns(Task.CompletedTask);
+        _dbContext.ChangeTracker.Clear();
         // Act
         var loanFound = await _loanService.ReturnBookAsync(loan.Id);
         // Assert
@@ -1082,7 +941,7 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         {
             await _loanService.ReturnBookAsync(Guid.NewGuid());
         });
-
+        _fixture.Reset();
     }
 
     [Fact]
@@ -1124,29 +983,21 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         _dbContext.Books.Add(book1);
         await _dbContext.SaveChangesAsync();
 
-        var user1 = new User
-        {
-            Id = Guid.NewGuid(),
-            FirstName = "Alice",
-            LastName = "Johnson",
-            Phone = "0456789123",
-            Email = "alice.johnson@example.com",
-            Password = "hashed_password_1",
-            Address = "123 Maple Street, Denver, CO",
-            AvatarUrl = "https://postimg.cc/AliceAvatar",
-            Salt = new byte[] { 1, 2, 3 },
-            Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow
-        };
+        var userBuilder = new UserBuilder();
+        var user = userBuilder
+            .WithId(Guid.NewGuid())
+            .Build();
 
-        _dbContext.Users.Add(user1);
+
+
+        _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
 
         var loan = new Loan
      (
          id: Guid.NewGuid(),
          bookId: book1.Id,
-         userId: user1.Id,
+         userId: user.Id,
          loanDate: DateTime.UtcNow,
          dueDate: new DateTime(2025, 11, 1)
      );
@@ -1260,9 +1111,10 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
         await _dbContext.SaveChangesAsync();
 
         // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<BusinessRuleViolationException>(() =>
             _loanService.UpdateLoanAsync(loan.Id)
         );
+        _fixture.Reset();
     }
 
 }

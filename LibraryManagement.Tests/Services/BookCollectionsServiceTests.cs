@@ -86,7 +86,7 @@ public class BookCollectionsServiceTests : IClassFixture<BookCollectionsServiceF
         Assert.Equal(3, resultList.Count);
         // Verify that the mapper was called for each book
         _fixture.BookMapperMock.Verify(m => m.ToBookReadDto(It.IsAny<Book>()), Times.Exactly(3));
-        _fixture.ResetMocks();
+        _fixture.Reset();
     }
     [Fact]
     public async Task GetBookCollectionsAsync_WithNullIds_ThrowsException()
@@ -99,7 +99,7 @@ public class BookCollectionsServiceTests : IClassFixture<BookCollectionsServiceF
         {
             var result = await _bookCollectionsService.GetBookCollectionsAsync(listOfBookId);
         });
-        _fixture.ResetMocks();
+        _fixture.Reset();
 
     }
     [Fact]
@@ -186,7 +186,7 @@ public class BookCollectionsServiceTests : IClassFixture<BookCollectionsServiceF
 
         // Verify that the mapper was called for each book
         _fixture.BookMapperMock.Verify(m => m.ToBookReadDto(It.IsAny<Book>()), Times.Exactly(3));
-        _fixture.ResetMocks();
+        _fixture.Reset();
     }
     [Fact]
     public async Task AddBookCollectionsAsync_WithNullBookDtos_ThrowsException()
@@ -207,7 +207,7 @@ public class BookCollectionsServiceTests : IClassFixture<BookCollectionsServiceF
         {
             var result = await _bookCollectionsService.CreateBooksAsync(listOfBookCreateDtos);
         });
-        _fixture.ResetMocks();
+        _fixture.Reset();
 
     }
 }

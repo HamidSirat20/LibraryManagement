@@ -65,8 +65,8 @@ public class LoansService : ILoansService
             {
                 UserId = userId,
                 BookId = loanCreateDto.BookId,
-                LoanDate = DateTime.Now,
-                DueDate = DateTime.Now.AddSeconds(30),
+                LoanDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(30),
                 ReturnDate = null,
                 LoanStatus = LoanStatus.Active
             };
@@ -233,7 +233,7 @@ public class LoansService : ILoansService
         try
         {
             var overdueLoans = await _context.Loans
-            .Where(l => l.DueDate < DateTime.Now && l.LoanStatus == LoanStatus.Active)
+            .Where(l => l.DueDate < DateTime.UtcNow && l.LoanStatus == LoanStatus.Active)
             .Include(l => l.User)
             .Include(l => l.Book)
             .AsNoTracking()
@@ -241,7 +241,7 @@ public class LoansService : ILoansService
 
             if (!overdueLoans.Any())
             {
-                _logger.LogInformation("No overdue loans found at {Time}.", DateTime.Now);
+                _logger.LogInformation("No overdue loans found at {Time}.", DateTime.UtcNow);
                 return Enumerable.Empty<Loan>();
             }
 
@@ -269,10 +269,10 @@ public class LoansService : ILoansService
 
             // Update loan status to Returned and set return date
             returnLoan.LoanStatus = LoanStatus.Returned;
-            returnLoan.ReturnDate = DateTime.Now;
+            returnLoan.ReturnDate = DateTime.UtcNow;
 
             // Calculate late fee if applicable and create a LateReturnOrLostFee
-            var endDate = returnLoan.ReturnDate ?? DateTime.Now;
+            var endDate = returnLoan.ReturnDate ?? DateTime.UtcNow;
             var lateDays = (endDate - returnLoan.DueDate).Days;
             var fee = returnLoan.CalculateLateFee();
 
@@ -304,7 +304,7 @@ public class LoansService : ILoansService
             if (nextReservation != null)
             {
                 var emailBody = _emailTemplateService.GetReservationReadyTemplate(nextReservation.User.FirstName, nextReservation.User.LastName,
-                 nextReservation.Book.Title, DateTime.Now.AddDays(3));
+                 nextReservation.Book.Title, DateTime.UtcNow.AddDays(3));
                 await _reservationQueueService.ProcessNextReservationAfterReturnAsync(nextReservation.BookId, "Your reservation is ready for pickup.", emailBody);
             }
             _context.Loans.Update(returnLoan);

@@ -52,15 +52,10 @@ public class LoansServiceFixture : IDisposable
     }
     public void Reset()
     {
-        // Clear all tables
-        DbContext.Loans.RemoveRange(DbContext.Loans);
-        DbContext.Reservations.RemoveRange(DbContext.Reservations);
-        DbContext.Users.RemoveRange(DbContext.Users);
-        DbContext.Books.RemoveRange(DbContext.Books);
-        DbContext.Authors.RemoveRange(DbContext.Authors);
-        DbContext.Publishers.RemoveRange(DbContext.Publishers);
+        DbContext.ChangeTracker.Clear();
 
-        DbContext.SaveChanges();
+        DbContext.Database.EnsureDeleted();
+        DbContext.Database.EnsureCreated();
 
         // Reset mocks
         LoansMapperMock.Reset();

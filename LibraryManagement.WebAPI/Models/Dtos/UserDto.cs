@@ -1,5 +1,4 @@
 ﻿using LibraryManagement.WebAPI.Models.Dtos.Common;
-using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace LibraryManagement.WebAPI.Models.Dtos;

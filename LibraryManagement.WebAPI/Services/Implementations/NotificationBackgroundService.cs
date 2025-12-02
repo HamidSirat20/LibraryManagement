@@ -14,7 +14,7 @@ public class NotificationBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var timer = new PeriodicTimer(TimeSpan.FromSeconds(12)); 
+        var timer = new PeriodicTimer(TimeSpan.FromHours(8)); 
 
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
@@ -32,7 +32,7 @@ public class NotificationBackgroundService : BackgroundService
         var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
         var templateService = scope.ServiceProvider.GetRequiredService<IEmailsTemplateService>();
 
-        var notificationTime = DateTime.Now.AddHours(8);
+        var notificationTime = DateTime.UtcNow.AddDays(2);
 
         var dueLoans = await dbContext.Loans
             .Include(l => l.Book)
@@ -56,7 +56,10 @@ public class NotificationBackgroundService : BackgroundService
                 $"Reminder: {loan.Book.Title} is due soon",
                 body
             );
-            loan.LoanStatus = LoanStatus.Overdue;
+            if (loan.DueDate < DateTime.UtcNow)
+            {
+                loan.LoanStatus = LoanStatus.Overdue;
+            }
         }
         await dbContext.SaveChangesAsync(stoppingToken);
 
@@ -97,9 +100,8 @@ public class NotificationBackgroundService : BackgroundService
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to send email to {fine.User.Email}: {ex.Message}");
-            }
-
-          
+            }         
         }
     }
+   
 }

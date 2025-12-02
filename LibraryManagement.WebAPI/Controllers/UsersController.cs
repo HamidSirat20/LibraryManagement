@@ -31,7 +31,7 @@ public class UsersController : ControllerBase
     {
         var users = await _userService.ListAllUsersAsync(queryOptions);
 
-        if(users == null)
+        if (users == null)
         {
             return NotFound();
         }
@@ -120,7 +120,7 @@ public class UsersController : ControllerBase
         return CreatedAtRoute("GetOneUser", new { id = createdUser.Id }, userReadDto);
     }
     [HttpGet("by-email/{email}")]
-   // [Authorize(Policy = "AdminCanAccess")]
+    // [Authorize(Policy = "AdminCanAccess")]
     public async Task<ActionResult<UserReadDto>> GetUserByEmail(string email)
     {
         var user = await _userService.GetByEmailAsync(email);
@@ -131,7 +131,7 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
     [HttpGet("with-active-loans")]
-   // [Authorize(Policy = "AdminCanAccess")]
+    // [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> GetUserWithActiveLoan()
     {
         var users = await _userService.GetUsersWithActiveLoansAsync();
@@ -161,6 +161,15 @@ public class UsersController : ControllerBase
             return BadRequest(ModelState);
         }
         return Ok(updatedUser);
+    }
+    [HttpPost("extend-membership")]
+    [Authorize(Policy = "AdminCanAccess")]
+    public async Task<IActionResult> ExtendUserMembership( [FromBody] Guid id)
+    {
+      
+        var extendedUser = await _userService.ExtendUserMembership(id);
+
+        return Ok(extendedUser);
     }
     [HttpOptions()]
     public IActionResult GetUsersOptions()

@@ -15,6 +15,7 @@ public interface IUsersService
     Task DeleteByIdAsync(Guid id);
     Task<bool> EntityExistAsync(Guid id);
     Task<User?> PromoteToAdminAsync(Guid memberId);
+    Task<User> ExtendUserMembership(Guid memberId);
     Task<IEnumerable<User>> GetUsersWithActiveLoansAsync();
     Task<IEnumerable<User>> GetUsersWithOverdueLoansAsync();
     Task<bool> ChangePassword(Guid id, string newPassword);

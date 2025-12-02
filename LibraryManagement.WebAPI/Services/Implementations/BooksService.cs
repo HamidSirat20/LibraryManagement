@@ -58,6 +58,15 @@ public class BooksService : IBooksService
             await SaveChangesAsync();
             return book;
         }
+        catch (BusinessRuleViolationException)
+        {
+            throw;
+        }
+        catch (ArgumentNullException)
+        {
+            throw;
+        }
+
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while creating a book.");

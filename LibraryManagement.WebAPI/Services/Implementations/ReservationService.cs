@@ -88,7 +88,7 @@ public class ReservationService : IReservationService
             {
                 BookId = bookId,
                 UserId = userId,
-                ReservedAt = DateTime.Now,
+                ReservedAt = DateTime.UtcNow,
                 ReservationStatus = ReservationStatus.Pending,
                 QueuePosition = nextQueuePosition
             };
@@ -104,7 +104,7 @@ public class ReservationService : IReservationService
                       .FirstOrDefaultAsync(r => r.Id == reservation.Id);
 
             // build email body
-            var reservationCreatedAt = reservation.CreatedAt ?? DateTime.Now;
+            var reservationCreatedAt = reservation.CreatedAt ?? DateTime.UtcNow;
             var body = _emailTemplateService.GetReservationConfirmationTemplate(newReservation.User.FullName, newReservation.User.LastName, newReservation.Book.Title
                 , reservationCreatedAt, newReservation.QueuePosition);
             await _emailService.SendEmailAsync(reservation.User.Email, "Reservation Created", body);
@@ -238,6 +238,14 @@ public class ReservationService : IReservationService
 
             var reservationDto = _reservationMapper.ToReservationReadDto(updatedReservation.Entity);
             return reservationDto;
+        }
+        catch (BusinessRuleViolationException)
+        {
+            throw;
+        }
+        catch (KeyNotFoundException)
+        {
+            throw;
         }
         catch (Exception ex) when (ex is not BusinessRuleViolationException)
         {

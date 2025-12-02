@@ -585,7 +585,7 @@ public class ReservationServiceTests : IClassFixture<ReservationsServiceFixture>
     {
         // Arrange
         // Act & Assert
-        await Assert.ThrowsAsync<BusinessRuleViolationException>(async () =>
+        await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
         {
             await _fixture.ReservationsService
                 .PickReservationByIdAsync(Guid.NewGuid(), Guid.NewGuid());
@@ -692,7 +692,7 @@ public class ReservationServiceTests : IClassFixture<ReservationsServiceFixture>
             });
 
         // Act & Assert
-        await Assert.ThrowsAsync<BusinessRuleViolationException>(async () =>
+        await Assert.ThrowsAsync<KeyNotFoundException>(async () =>
         {
             await _fixture.ReservationsService
                 .PickReservationByIdAsync(reservation.Id, Guid.NewGuid());

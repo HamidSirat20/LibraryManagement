@@ -32,9 +32,14 @@ public class BookCollectionsServiceFixture : IDisposable
         BookMapperMock = new Mock<IBooksMapper>();
         BookCollectionsService = new BookCollectionsService(DbContext, BookMapperMock.Object);
     }
-    public void ResetMocks()
+    public void Reset()
     {
-        BookMapperMock.Invocations.Clear();
+        DbContext.ChangeTracker.Clear();
+
+        DbContext.Database.EnsureDeleted();
+        DbContext.Database.EnsureCreated();
+        // Reset mocks
+        BookMapperMock.Reset();
     }
     public void Dispose()
     {

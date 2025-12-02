@@ -4,56 +4,6 @@ using System.Text;
 namespace LibraryManagement.WebAPI.Services.Implementations;
 public class EmailsTemplateService : IEmailsTemplateService
 {
-    public string GetBookAvailableNotificationTemplate(string firstName, string lastName, string bookTitle)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetFineIssuedTemplate(string firstName, string lastName, string bookTitle, decimal fineAmount, string reason)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetLoanConfirmationTemplate(string firstName, string lastName, string bookTitle, DateTime dueDate)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetLoanOverdueTemplate(string firstName, string lastName, string bookTitle, int daysOverdue, decimal fineAmount)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetMembershipExpiredTemplate(string firstName, string lastName)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetMembershipExpiryReminderTemplate(string firstName, string lastName, DateTime expiryDate, int daysUntilExpiry)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetMembershipRenewalEmailTemplate(string firstName, string lastName, DateTime renewalDate)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetMembershipRenewedTemplate(string firstName, string lastName, DateTime newExpiryDate)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetPasswordResetEmailTemplate(string firstName, string lastName, string resetLink)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetPaymentConfirmationTemplate(string firstName, string lastName, decimal amountPaid, decimal remainingBalance)
-    {
-        throw new NotImplementedException();
-    }
-
     public string GetPaymentReminderTemplate(string firstName, string lastName, decimal outstandingBalance)
     {
         var sb = new StringBuilder();
@@ -100,12 +50,6 @@ public class EmailsTemplateService : IEmailsTemplateService
         sb.AppendLine("The Library Team");
 
         return sb.ToString();
-    }
-
-
-    public string GetReservationCancelledTemplate(string firstName, string lastName, string bookTitle, string cancellationReason)
-    {
-        throw new NotImplementedException();
     }
 
     public string GetReservationConfirmationTemplate(string firstName, string lastName, string bookTitle, DateTime reservedDate, int queuePosition)
@@ -165,12 +109,6 @@ public class EmailsTemplateService : IEmailsTemplateService
 
         return sb.ToString();
     }
-
-    public string GetReservationExpiredTemplate(string firstName, string lastName, string bookTitle)
-    {
-        throw new NotImplementedException();
-    }
-
     public string GetReservationReadyTemplate(string firstName, string lastName, string bookTitle, DateTime pickupDeadline)
     {
 
@@ -262,16 +200,5 @@ public class EmailsTemplateService : IEmailsTemplateService
         sb.AppendLine("The Library Team");
 
         return sb.ToString();
-    }
-
-
-    public string GetSystemMaintenanceTemplate(string firstName, string lastName, DateTime maintenanceStart, DateTime maintenanceEnd)
-    {
-        throw new NotImplementedException();
-    }
-
-    public string GetWelcomeEmailTemplate(string firstName, string lastName)
-    {
-        throw new NotImplementedException();
     }
 }

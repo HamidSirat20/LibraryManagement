@@ -13,32 +13,25 @@ namespace LibraryManagement.WebAPI.Controllers
     {
         private readonly ILateReturnOrLostFeeService _lateReturnOrLostFeeService;
         private readonly ILateReturnOrLostFeeMapper _lateReturnOrLostFeeMapper;
-        public LateOrLostFeeController(ILateReturnOrLostFeeService lateReturnOrLostFeeService, ILateReturnOrLostFeeMapper lateReturnOrLostFeeMapper)
+        private readonly ICurrentUserService _currentUserService;
+        public LateOrLostFeeController(ILateReturnOrLostFeeService lateReturnOrLostFeeService, ILateReturnOrLostFeeMapper lateReturnOrLostFeeMapper, ICurrentUserService currentUserService)
         {
             _lateReturnOrLostFeeService = lateReturnOrLostFeeService ?? throw new ArgumentNullException(nameof(lateReturnOrLostFeeService));
             _lateReturnOrLostFeeMapper = lateReturnOrLostFeeMapper ?? throw new ArgumentNullException(nameof(lateReturnOrLostFeeMapper));
+            _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
         }
-        // GET: api/<LateOrLostFeeController>
         [HttpGet]
         public async Task<IActionResult> GetAllFees()
         {
-           var fees = await _lateReturnOrLostFeeService.GetAllAsync();
+            var fees = await _lateReturnOrLostFeeService.GetAllAsync();
             return Ok(fees);
         }
 
-        [HttpGet("{id}",Name = "GetFineByIdAsync")]
-        public async Task<IActionResult> GetFineByIdAsync(Guid fineId)
+        [HttpGet("{fineId}", Name = "GetFineByIdAsync")]
+        public async Task<IActionResult> GetFineByIdAsync([FromRoute] Guid fineId)
         {
-            try
-            {
-                var fine = _lateReturnOrLostFeeService.GetFineByIdAsync(fineId);
-                return Ok(fine);
-
-            }
-            catch(Exception ex)
-            {
-                throw;
-            }
+            var fine = await _lateReturnOrLostFeeService.GetFineByIdAsync(fineId);
+            return Ok(fine);
         }
 
         [HttpPost]
@@ -46,19 +39,17 @@ namespace LibraryManagement.WebAPI.Controllers
         {
             var createdFine = await _lateReturnOrLostFeeService.CreateLostFineAsync(lostFineCreateDto);
             var fineReadDto = _lateReturnOrLostFeeMapper.ToReadDto(createdFine);
-            return CreatedAtAction(nameof(GetFineByIdAsync), new { id = fineReadDto.Id }, fineReadDto);
+            return CreatedAtAction(nameof(GetFineByIdAsync), new { fineId = fineReadDto.Id }, fineReadDto);
         }
 
-        // PUT api/<LateOrLostFeeController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpGet("my-fines")]
+        public async Task<IActionResult> GetFineByIdForUserAsync()
         {
-        }
+            var currentUserId = _currentUserService.UserId();
 
-        // DELETE api/<LateOrLostFeeController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            var fine = await _lateReturnOrLostFeeService.GetFinesForUserAsync(currentUserId);
+            return Ok(fine);
+
         }
     }
 }

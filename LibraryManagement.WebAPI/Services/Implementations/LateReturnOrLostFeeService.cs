@@ -51,6 +51,18 @@ public class LateReturnOrLostFeeService : ILateReturnOrLostFeeService
 
         try
         {
+            var loan = await _dbContext.Loans
+            .Include(l => l.Book)
+            .FirstOrDefaultAsync(l => l.Id == dto.LoanId);
+
+
+            if (loan == null)
+                throw new BusinessRuleViolationException("Loan not found for lost item fee.");
+
+            // Check if already marked lost
+            if (loan.Book.BookStatus == BookStatus.Lost)
+                throw new BusinessRuleViolationException("This book is already marked as lost. A fine already exists.");
+
             var fine = new LateReturnOrLostFee
             {
                 UserId = dto.UserId,
@@ -63,13 +75,6 @@ public class LateReturnOrLostFeeService : ILateReturnOrLostFeeService
             };
 
             _dbContext.LateReturnOrLostFees.Add(fine);
-
-            var loan = await _dbContext.Loans
-              .Include(l => l.Book)
-              .FirstOrDefaultAsync(l => l.Id == dto.LoanId);
-
-            if (loan == null)
-                throw new BusinessRuleViolationException("Loan not found for lost item fee.");
 
             // Mark book as Lost
             loan.Book.BookStatus = BookStatus.Lost;
@@ -87,35 +92,13 @@ public class LateReturnOrLostFeeService : ILateReturnOrLostFeeService
 
     }
 
-    public async Task<bool> DeleteFineAsync(Guid id)
-    {
-        try
-        {
-            var fine = _dbContext.LateReturnOrLostFees.Find(id);
-            if (fine == null)
-            {
-                _logger.LogWarning("Fine with id {FineId} not found for deletion.", id);
-                throw new BusinessRuleViolationException($"Fine with id {id} not found.", "Not_Found");
-            }
-            _dbContext.LateReturnOrLostFees.Remove(fine);
-            var result = await _dbContext.SaveChangesAsync();
-            return result > 0;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "An error occurred while deleting a fine.");
-            throw;
-        }
-    }
-
     public async Task<IEnumerable<LateReturnOrLostFee>> GetAllAsync()
     {
         try
         {
-            var fines = _dbContext.LateReturnOrLostFees.AsQueryable();
-            return await Task.FromResult(fines);
-
+            return await _dbContext.LateReturnOrLostFees.ToListAsync();
         }
+
         catch (BusinessRuleViolationException)
         {
             throw;
@@ -131,13 +114,13 @@ public class LateReturnOrLostFeeService : ILateReturnOrLostFeeService
     {
         try
         {
-            var fine = await _dbContext.LateReturnOrLostFees.FindAsync(id);
+            var fine = await _dbContext.LateReturnOrLostFees.FirstOrDefaultAsync(f => f.Id == id);
             if (fine == null)
             {
                 _logger.LogWarning("Fine with id {FineId} not found.", id);
                 throw new BusinessRuleViolationException($"Fine with id {id} not found.", "Not_Found");
             }
-            return await Task.FromResult(fine);
+            return fine;
         }
         catch (BusinessRuleViolationException)
         {

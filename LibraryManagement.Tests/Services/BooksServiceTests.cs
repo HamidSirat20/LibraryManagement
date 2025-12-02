@@ -59,19 +59,6 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
             .WithPublisher(publisher.Id)
             .Build();
 
-        _fixture.BookMapperMock
-                    .Setup(m => m.ToBook(It.IsAny<BookCreateDto>()))
-                    .Returns(new Book
-                    {
-                        Id = newBook.Id,
-                        Title = newBook.Title,
-                        Description = newBook.Description,
-                        Genre = newBook.Genre,
-                        Pages = newBook.Pages,
-                        PublisherId = newBook.PublisherId,
-                        CoverImageUrl = newBook.CoverImageUrl,
-                        BookAuthors = new List<BookAuthor>()
-                    });
 
         var fakeFileContent = Encoding.UTF8.GetBytes("fake image content");
         var fakeStream = new MemoryStream(fakeFileContent);
@@ -89,6 +76,10 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
             AuthorIds = new List<Guid> { author.Id }
         };
 
+        // setup mapper
+        _fixture.BookMapperMock
+                    .Setup(m => m.ToBook(bookCreateDto))
+                    .Returns(newBook);
         _fixture.ImageServiceMock
             .Setup(s => s.AddImageAsync(It.IsAny<IFormFile>()))
             .ReturnsAsync(new ImageUploadResult
@@ -152,7 +143,6 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
             .WithId(Guid.NewGuid())
             .WithTitle("The Great Gatsby")
             .WithAuthor(author.Id)
-            .WithCoverImage("https://example.com/gatsby.jpg")
             .WithDescription("A novel set in the Jazz Age...")
             .WithPublishedDate(DateTime.Now)
             .WithGenre(Genre.Fiction)
@@ -160,19 +150,7 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
             .WithPublisher(publisher.Id)
             .Build();
 
-        _fixture.BookMapperMock
-                    .Setup(m => m.ToBook(It.IsAny<BookCreateDto>()))
-                    .Returns(new Book
-                    {
-                        Id = newBook.Id,
-                        Title = newBook.Title,
-                        Description = newBook.Description,
-                        Genre = newBook.Genre,
-                        Pages = newBook.Pages,
-                        PublisherId = newBook.PublisherId,
-                        CoverImageUrl = newBook.CoverImageUrl,
-                        BookAuthors = new List<BookAuthor>()
-                    });
+
 
         IFormFile fakeFile = null;
         var bookCreateDto = new BookCreateDto
@@ -186,17 +164,21 @@ public class BooksServiceTests : IClassFixture<BooksServiceFixture>
             PublisherId = publisher.Id,
             AuthorIds = new List<Guid> { author.Id }
         };
+        // setup mapper
+        _fixture.BookMapperMock
+       .Setup(m => m.ToBook(bookCreateDto))
+       .Returns(newBook);
 
         //Act
         var createdBook = await _booksService.CreateBookAsync(bookCreateDto);
 
         //Assert
         Assert.NotNull(createdBook);
-        Assert.Equal("The Great Gatsby", createdBook.Title);
-        Assert.Equal("A novel set in the Jazz Age...", createdBook.Description);
-        Assert.Equal(Genre.Fiction, createdBook.Genre);
-        Assert.Equal(180, createdBook.Pages);
-        Assert.Equal(publisher.Id, createdBook.PublisherId);
+        Assert.Equal(newBook.Title, createdBook.Title);
+        Assert.Equal(newBook.Description, createdBook.Description);
+        Assert.Equal(newBook.Genre, createdBook.Genre);
+        Assert.Equal(newBook.Pages, createdBook.Pages);
+        Assert.Equal(newBook.PublisherId, createdBook.PublisherId);
         Assert.Single(createdBook.BookAuthors);
         Assert.Equal(author.Id, createdBook.BookAuthors.First().AuthorId);
         _fixture.Reset();

@@ -44,10 +44,10 @@ public class Loan : BaseEntityWithId
 
     public decimal CalculateLateFee()
     {
-        DateTime endDate = ReturnDate ?? DateTime.Now;
+        DateTime endDate = ReturnDate ?? DateTime.UtcNow;
         if (endDate > DueDate)
         {
-            var lateDays = (endDate - DueDate).Seconds;
+            var lateDays = (endDate - DueDate).Days;
             LateFee = lateDays * DailyLateFee;
             return (decimal)LateFee;
         }

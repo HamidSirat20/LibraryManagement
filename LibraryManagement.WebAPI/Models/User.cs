@@ -19,7 +19,7 @@ public class User : BaseEntityWithId
     public DateTime MembershipStartDate { get; set; }
     public DateTime MembershipEndDate { get; set; }
     [NotMapped]
-    public bool IsActive => MembershipEndDate > DateTime.Now;
+    public bool IsActive => MembershipEndDate > DateTime.UtcNow;
 
     // Navigation properties
     public List<Loan> Loans { get; set; } = new();

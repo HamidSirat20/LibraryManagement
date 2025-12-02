@@ -80,7 +80,7 @@ public class UsersService : IUsersService
 
             user.Role = UserRole.Admin;
             await _context.Users.AddAsync(user);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             _logger.LogDebug("Admin user with email {Email} created successfully", userCreateDto.Email);
             return user;
         }
@@ -104,8 +104,8 @@ public class UsersService : IUsersService
         {
             _logger.LogInformation("Creating user with email {Email}", userCreateDto.Email);
             //trim inputs for email and password
-            userCreateDto.Email = userCreateDto.Email?.Trim();
-            userCreateDto.Password = userCreateDto.Password?.Trim();
+            userCreateDto.Email = userCreateDto.Email.Trim();
+            userCreateDto.Password = userCreateDto.Password.Trim();
 
             var user = _userMapper.ToEntity(userCreateDto);
             if (userCreateDto.File == null)
@@ -128,7 +128,7 @@ public class UsersService : IUsersService
             user.Role = UserRole.User;
 
             await _context.Users.AddAsync(user);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             _logger.LogDebug("User with email {Email} created successfully", userCreateDto.Email);
             return user;
         }
@@ -171,6 +171,29 @@ public class UsersService : IUsersService
     public async Task<bool> EntityExistAsync(Guid id)
     {
         return await _context.Users.AnyAsync(x => x.Id == id);
+    }
+
+    public async Task<User> ExtendUserMembership(Guid memberId)
+    {
+        if (memberId == Guid.Empty)
+            throw new ArgumentException("User id should not be empty.", nameof(memberId));
+        try
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == memberId);
+            if (user == null)
+            {
+                _logger.LogWarning("User with {memberId} was not found.", memberId);
+                throw new BusinessRuleViolationException("User with {memberId} was not found.", "NOT_FOUND");
+            }
+            user.MembershipEndDate = DateTime.UtcNow.AddYears(5);
+            await _context.SaveChangesAsync();
+            return user;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while promoting user to admin.");
+            throw;
+        }
     }
 
     public async Task<User?> GetByEmailAsync(string email)
