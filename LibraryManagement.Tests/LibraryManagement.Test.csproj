@@ -36,10 +36,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="Controllers\" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\LibraryManagement.WebAPI\LibraryManagement.WebAPI.csproj" />
 	</ItemGroup>
 

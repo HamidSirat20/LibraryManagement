@@ -6,7 +6,6 @@ using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using static LibraryManagement.WebAPI.Helpers.ApiRoutes;
 
 namespace LibraryManagement.WebAPI.Controllers;
 

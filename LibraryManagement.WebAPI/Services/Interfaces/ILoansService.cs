@@ -15,6 +15,5 @@ public interface ILoansService
     Task<IEnumerable<Loan>> GetYourOwnLoansAsync(Guid userId, bool includeReturnedLoans = false);
     Task<IEnumerable<Loan>> GetLoansByUserIdAsync(Guid userId, bool includeReturnedLoans = false);
     Task<IEnumerable<Loan>> GetOverdueLoansAsync();
-
 }
 

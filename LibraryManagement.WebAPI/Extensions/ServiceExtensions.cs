@@ -110,6 +110,7 @@ public static class ServiceExtensions
         webApplication.Services.AddTransient<ILateReturnOrLostFeeMapper, LateReturnOrLostFeeMapper>();
         webApplication.Services.AddHttpContextAccessor();
 
+
         // Add Background Services
         webApplication.Services.AddHostedService<NotificationBackgroundService>();
 
