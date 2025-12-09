@@ -29,11 +29,12 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
+    # Build in Release
     - name: Build
       run: dotnet build --configuration Release --no-restore
       
     - name: Test
-      run: dotnet test --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      run: dotnet test --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
       
     - name: Publish
       run: dotnet publish -c Release -o ./publish --no-build
