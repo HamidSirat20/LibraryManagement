@@ -30,12 +30,13 @@ jobs:
       run: dotnet restore
       
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --configuration ${{ matrix.configuration }} --no-restore
       
     - name: Test
       run: dotnet test --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
       
     - name: Publish
+      if: matrix.configuration == 'Release'
       run: dotnet publish -c Release -o ./publish --no-build
       
     - name: Upload artifact
