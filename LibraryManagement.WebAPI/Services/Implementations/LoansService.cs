@@ -1,5 +1,6 @@
 ﻿using LibraryManagement.WebAPI.CustomExceptionHandler;
 using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Events;
 using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
@@ -14,17 +15,17 @@ public class LoansService : ILoansService
     private readonly LibraryDbContext _context;
     private readonly ILoansMapper _mapper;
     private readonly ILogger<LoansService> _logger;
-    private readonly IEmailsTemplateService _emailTemplateService;
     private readonly IReservationsQueueService _reservationQueueService;
     private readonly ILateReturnOrLostFeeService _lateReturnOrLostFeeService;
-    public LoansService(LibraryDbContext context, ILoansMapper mapper, ILogger<LoansService> logger, IEmailsTemplateService emailTemplateService, IReservationsQueueService reservationQueueService, ILateReturnOrLostFeeService lateReturnOrLostFeeService)
+    private readonly IEventAggregator _eventAggregator;
+    public LoansService(LibraryDbContext context, ILoansMapper mapper, ILogger<LoansService> logger, IReservationsQueueService reservationQueueService, ILateReturnOrLostFeeService lateReturnOrLostFeeService, IEventAggregator eventAggregator)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
         _reservationQueueService = reservationQueueService ?? throw new ArgumentNullException(nameof(reservationQueueService));
         _lateReturnOrLostFeeService = lateReturnOrLostFeeService ?? throw new ArgumentNullException(nameof(lateReturnOrLostFeeService));
+        _eventAggregator = eventAggregator ?? throw new ArgumentNullException(nameof(eventAggregator));
     }
 
     public async Task<LoanReadDto> MakeLoanAsync(LoanCreateDto loanCreateDto, Guid userId)
@@ -34,10 +35,10 @@ public class LoansService : ILoansService
         try
         {
             // Check membership validity
-           var user = await _context.Users
-          .AsNoTracking()
-          .FirstOrDefaultAsync(u => u.Id == userId)
-          ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
+            var user = await _context.Users
+           .AsNoTracking()
+           .FirstOrDefaultAsync(u => u.Id == userId)
+           ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
 
             if (!user.IsActive)
             {
@@ -260,7 +261,10 @@ public class LoansService : ILoansService
             throw new ArgumentException("Loan ID cannot be empty", nameof(loanId));
         try
         {
-            var returnLoan = await GetLoanByIdAsync(loanId);
+            var returnLoan = await _context.Loans
+                                    .Include(l => l.Book)
+                                    .Include(l => l.User)
+                                    .FirstOrDefaultAsync(l => l.Id == loanId);
             if (returnLoan == null)
             {
                 _logger.LogWarning($"Loan with {loanId} id not found.");
@@ -303,12 +307,20 @@ public class LoansService : ILoansService
             //send email notification to user
             if (nextReservation != null)
             {
-                var emailBody = _emailTemplateService.GetReservationReadyTemplate(nextReservation.User.FirstName, nextReservation.User.LastName,
-                 nextReservation.Book.Title, DateTime.UtcNow.AddDays(3));
-                await _reservationQueueService.ProcessNextReservationAfterReturnAsync(nextReservation.BookId, "Your reservation is ready for pickup.", emailBody);
+                await _eventAggregator.PublishAsync(new ReservationReadyEventArgs
+                {
+                    FirstName = nextReservation.User.FirstName,
+                    LastName = nextReservation.User.LastName,
+                    BookTitle = nextReservation.Book.Title,
+                    PickUpDeadLine = DateTime.UtcNow.AddDays(3),
+                    UserEmail = nextReservation.User.Email,
+                });
+
+                await _reservationQueueService.ProcessNextReservationAfterReturnAsync(nextReservation.BookId);
             }
             _context.Loans.Update(returnLoan);
             await _context.SaveChangesAsync();
+
             return returnLoan;
         }
         catch (Exception ex)

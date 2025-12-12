@@ -14,7 +14,7 @@ public class NotificationBackgroundService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var timer = new PeriodicTimer(TimeSpan.FromHours(8)); 
+        var timer = new PeriodicTimer(TimeSpan.FromHours(8));
 
         while (await timer.WaitForNextTickAsync(stoppingToken))
         {
@@ -81,10 +81,9 @@ public class NotificationBackgroundService : BackgroundService
 
         foreach (var fine in fines)
         {
-            var body = templateService.GetPaymentReminderTemplate(
-                fine.User.FirstName,
-                fine.User.LastName,
-                fine.Amount
+            var emailBody = templateService.GetPaymentReminderTemplate(
+               fine.User.FirstName, fine.User.LastName, fine.Loan.Book.Title,
+               fine.FineType, fine.Amount
             );
 
             try
@@ -92,7 +91,7 @@ public class NotificationBackgroundService : BackgroundService
                 await emailService.SendEmailAsync(
                     fine.User.Email,
                     $"Reminder: {fine.FineType} payment is due soon",
-                    body
+                    emailBody
                 );
                 fine.Status = FineStatus.Notified;
                 await dbContext.SaveChangesAsync(stoppingToken);
@@ -100,8 +99,8 @@ public class NotificationBackgroundService : BackgroundService
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to send email to {fine.User.Email}: {ex.Message}");
-            }         
+            }
         }
     }
-   
+
 }

@@ -2,7 +2,7 @@
 
 public interface IReservationsQueueService
 {
-    Task ProcessNextReservationAfterReturnAsync(Guid bookId, string emailSubject, string emailBod);
+    Task ProcessNextReservationAfterReturnAsync(Guid bookId);
     Task<int> GetQueuePositionAsync(Guid bookId, Guid reservationId);
 }
 

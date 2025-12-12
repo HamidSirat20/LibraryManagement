@@ -1,5 +1,6 @@
 ﻿using LibraryManagement.WebAPI.CustomExceptionHandler;
 using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Events;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Dtos;
 using LibraryManagement.WebAPI.Services.Interfaces;
@@ -10,10 +11,12 @@ public class LateReturnOrLostFeeService : ILateReturnOrLostFeeService
 {
     private readonly LibraryDbContext _dbContext;
     private readonly ILogger<LateReturnOrLostFeeService> _logger;
-    public LateReturnOrLostFeeService(LibraryDbContext libraryDbContext, ILogger<LateReturnOrLostFeeService> logger)
+    private readonly IEventAggregator _eventAggregator;
+    public LateReturnOrLostFeeService(LibraryDbContext libraryDbContext, ILogger<LateReturnOrLostFeeService> logger, IEventAggregator eventAggregator)
     {
         _dbContext = libraryDbContext ?? throw new ArgumentNullException(nameof(libraryDbContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _eventAggregator = eventAggregator ?? throw new ArgumentNullException(nameof(eventAggregator));
     }
     public async Task<LateReturnOrLostFee> CreateLateFineAsync(LateReturnFineInternalDto dto)
     {
@@ -37,6 +40,16 @@ public class LateReturnOrLostFeeService : ILateReturnOrLostFeeService
             _dbContext.LateReturnOrLostFees.Add(fine);
             await _dbContext.SaveChangesAsync();
 
+            await _eventAggregator.PublishAsync(new LateReturnFineOrLostEventArgs
+            {
+                OccurredAt = DateTime.UtcNow,
+                FirstName = fine.User.FirstName,
+                LastName = fine.User.LastName,
+                BookTitle = fine.Loan.Book.Title,
+                FineType = fine.FineType,
+                FinePrice = fine.Amount,
+                UserEmail = fine.User.Email,
+            });
             return fine;
         }
         catch (Exception ex)
@@ -81,6 +94,17 @@ public class LateReturnOrLostFeeService : ILateReturnOrLostFeeService
 
             await _dbContext.SaveChangesAsync();
 
+            //publish event
+            await _eventAggregator.PublishAsync(new LateReturnFineOrLostEventArgs
+            {
+                OccurredAt = DateTime.UtcNow,
+                FirstName = fine.User.FirstName,
+                LastName = fine.User.LastName,
+                BookTitle = fine.Loan.Book.Title,
+                FineType = fine.FineType,
+                FinePrice = fine.Amount,
+                UserEmail = fine.User.Email,
+            });
 
             return fine;
         }

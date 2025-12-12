@@ -1,4 +1,6 @@
-﻿namespace LibraryManagement.WebAPI.Services.Interfaces;
+﻿using LibraryManagement.WebAPI.Models;
+
+namespace LibraryManagement.WebAPI.Services.Interfaces;
 
 public interface IEmailsTemplateService
 {
@@ -10,5 +12,5 @@ public interface IEmailsTemplateService
     string GetReturnReminderTemplate(string firstName, string lastName, string bookTitle, DateTime dueDate, int daysUntilDue);
 
     // Fines & Payments
-    string GetPaymentReminderTemplate(string firstName, string lastName, decimal outstandingBalance);
+    string GetPaymentReminderTemplate(string firstName, string lastName, string BookTitle,FineType fineReason,decimal outstandingBalance);
 }

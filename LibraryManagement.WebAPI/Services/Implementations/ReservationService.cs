@@ -1,5 +1,6 @@
 ﻿using LibraryManagement.WebAPI.CustomExceptionHandler;
 using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Events;
 using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Models.Common;
@@ -18,7 +19,8 @@ public class ReservationService : IReservationService
     private readonly IEmailService _emailService;
     private readonly IEmailsTemplateService _emailTemplateService;
     private readonly IReservationsQueueService _reservationQueueService;
-    public ReservationService(LibraryDbContext context, ILogger<ReservationService> logger, IReservationsMapper reservationMapper, IEmailService emailService, IEmailsTemplateService emailTemplateService, IReservationsQueueService reservationQueueService)
+    private readonly IEventAggregator _eventAggregator;
+    public ReservationService(LibraryDbContext context, ILogger<ReservationService> logger, IReservationsMapper reservationMapper, IEmailService emailService, IEmailsTemplateService emailTemplateService, IReservationsQueueService reservationQueueService, IEventAggregator eventAggregator)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -26,6 +28,7 @@ public class ReservationService : IReservationService
         _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
         _emailTemplateService = emailTemplateService ?? throw new ArgumentNullException(nameof(emailTemplateService));
         _reservationQueueService = reservationQueueService ?? throw new ArgumentNullException(nameof(reservationQueueService));
+        _eventAggregator = eventAggregator ?? throw new ArgumentNullException(nameof(eventAggregator));
     }
 
 
@@ -104,10 +107,21 @@ public class ReservationService : IReservationService
                       .FirstOrDefaultAsync(r => r.Id == reservation.Id);
 
             // build email body
-            var reservationCreatedAt = reservation.CreatedAt ?? DateTime.UtcNow;
-            var body = _emailTemplateService.GetReservationConfirmationTemplate(newReservation.User.FullName, newReservation.User.LastName, newReservation.Book.Title
-                , reservationCreatedAt, newReservation.QueuePosition);
-            await _emailService.SendEmailAsync(reservation.User.Email, "Reservation Created", body);
+            //var reservationCreatedAt = reservation.CreatedAt ?? DateTime.UtcNow;
+            //var body = _emailTemplateService.GetReservationConfirmationTemplate(newReservation.User.FullName, newReservation.User.LastName, newReservation.Book.Title
+            //    , reservationCreatedAt, newReservation.QueuePosition);
+            //await _emailService.SendEmailAsync(reservation.User.Email, "Reservation Created", body);
+            //publish event
+            await _eventAggregator.PublishAsync(new ReservationCreatedEventArgs
+            {
+                ReservedAt = reservation.ReservedAt,
+                FirstName = reservation.User.FirstName,
+                LastName = reservation.User.LastName,
+                BookTitle = reservation.Book.Title,
+                OccurredAt = DateTime.UtcNow,
+                QueuePosition = reservation.QueuePosition,
+                UserEmail = reservation.User.Email,
+            });
 
             _logger.LogInformation("Reservation created for Book {BookId} by User {UserId}.", bookId, userId);
             return reservationReadDto;

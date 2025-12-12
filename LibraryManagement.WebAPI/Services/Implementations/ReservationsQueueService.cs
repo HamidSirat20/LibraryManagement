@@ -8,19 +8,16 @@ namespace LibraryManagement.WebAPI.Services.Implementations;
 public class ReservationsQueueService : IReservationsQueueService
 {
     private readonly LibraryDbContext _context;
-    private readonly IEmailService _emailService;
     private readonly ILogger<ReservationsQueueService> _logger;
     public ReservationsQueueService(
         LibraryDbContext context,
-        IEmailService emailService,
         ILogger<ReservationsQueueService> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task ProcessNextReservationAfterReturnAsync(Guid bookId, string emailSubject, string emailBody)
+    public async Task ProcessNextReservationAfterReturnAsync(Guid bookId)
     {
         try
         {
@@ -40,8 +37,6 @@ public class ReservationsQueueService : IReservationsQueueService
                 nextReservation.QueuePosition = 0;
                 nextReservation.UpdatedAt = DateTime.UtcNow;
                 var userEmail = nextReservation.User.Email;
-                // Send notification email
-                await _emailService.SendEmailAsync(userEmail, emailSubject, emailBody);
 
                 _logger.LogInformation("Notified user {UserId} about ready reservation {ReservationId}",
                     nextReservation.UserId, nextReservation.Id);

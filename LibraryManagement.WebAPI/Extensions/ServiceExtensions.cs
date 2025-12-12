@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Events;
 using LibraryManagement.WebAPI.Helpers;
 using LibraryManagement.WebAPI.Models;
 using LibraryManagement.WebAPI.Services.Implementations;
@@ -108,6 +109,12 @@ public static class ServiceExtensions
         webApplication.Services.AddTransient<IEmailService, EmailService>();
         webApplication.Services.AddTransient<ILateReturnOrLostFeeService, LateReturnOrLostFeeService>();
         webApplication.Services.AddTransient<ILateReturnOrLostFeeMapper, LateReturnOrLostFeeMapper>();
+        
+        webApplication.Services.AddScoped<IEventAggregator, EventAggregator>();
+        webApplication.Services.AddScoped<IEventHandler<ReservationReadyEventArgs>, NotificationService>();
+        webApplication.Services.AddScoped<IEventHandler<LateReturnFineOrLostEventArgs>, NotificationService>();
+        webApplication.Services.AddScoped<IEventHandler<ReservationCreatedEventArgs>, NotificationService>();
+
         webApplication.Services.AddHttpContextAccessor();
 
 
