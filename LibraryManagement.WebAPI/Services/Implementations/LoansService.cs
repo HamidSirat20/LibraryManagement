@@ -38,7 +38,7 @@ public class LoansService : ILoansService
             var user = await _context.Users
            .AsNoTracking()
            .FirstOrDefaultAsync(u => u.Id == userId)
-           ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
+            ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
 
             if (!user.IsActive)
             {
@@ -52,7 +52,7 @@ public class LoansService : ILoansService
                 .Include(b => b.Loans)
                 .Include(b => b.Reservations)
                 .FirstOrDefaultAsync(b => b.Id == loanCreateDto.BookId)
-                ?? throw new KeyNotFoundException($"Book with ID {nameof(loanCreateDto.BookId)} not found.");
+            ?? throw new KeyNotFoundException($"Book with ID {nameof(loanCreateDto.BookId)} not found.");
 
             if (!book.IsAvailable)
             {
@@ -61,6 +61,7 @@ public class LoansService : ILoansService
                     $"Book with ID {loanCreateDto.BookId} is currently unavailable for loan.You may place a reservation to be notified when it becomes available."
                 );
             }
+
 
             var loan = new Loan
             {
@@ -214,7 +215,7 @@ public class LoansService : ILoansService
                                             .Include(r => r.Book)
                                             .AsNoTracking()
                                             .FirstOrDefaultAsync(l => l.Id == loanId);
-            if (loan == null)
+            if (loan is null)
             {
                 _logger.LogWarning("Loan with {loan.Id} does not exist!", loanId);
                 throw new BusinessRuleViolationException($"Book with {loanId} id not found", "Not_Found");
@@ -265,19 +266,21 @@ public class LoansService : ILoansService
                                     .Include(l => l.Book)
                                     .Include(l => l.User)
                                     .FirstOrDefaultAsync(l => l.Id == loanId);
-            if (returnLoan == null)
+            if (returnLoan is null)
             {
                 _logger.LogWarning($"Loan with {loanId} id not found.");
                 throw new ArgumentNullException($"Loan with {loanId} id not found.");
             }
 
             // Update loan status to Returned and set return date
+            var (user, book, dueDate, returnDate, status) = returnLoan;
+
             returnLoan.LoanStatus = LoanStatus.Returned;
             returnLoan.ReturnDate = DateTime.UtcNow;
 
             // Calculate late fee if applicable and create a LateReturnOrLostFee
-            var endDate = returnLoan.ReturnDate ?? DateTime.UtcNow;
-            var lateDays = (endDate - returnLoan.DueDate).Days;
+            var endDate = returnLoan.ReturnDate!.Value;
+            var lateDays = (endDate - dueDate).Days;
             var fee = returnLoan.CalculateLateFee();
 
             if (fee > 0)
@@ -285,9 +288,9 @@ public class LoansService : ILoansService
                 var lateFee = new LateReturnFineInternalDto
                 {
                     LoanId = returnLoan.Id,
-                    UserId = returnLoan.UserId,
+                    UserId = user.Id,
                     Amount = fee,
-                    Description = $"Late return fee for loan {returnLoan.Book.Title}, {lateDays} day(s) late."
+                    Description = $"Late return fee for loan {book.Title}, {lateDays} day(s) late."
                 };
 
                 await _lateReturnOrLostFeeService.CreateLateFineAsync(lateFee);

@@ -1,4 +1,5 @@
 ﻿using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Events;
 using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
@@ -19,6 +20,7 @@ public class LoansServiceFixture : IDisposable
     public Mock<ILogger<LoansService>> LoggerMock { get; }
     public Mock<IConfiguration> ConfigurationMock { get; }
     public Mock<ILateReturnOrLostFeeService> LateReturnOrLostFeeServiceMock { get; }
+    public Mock<IEventAggregator> EventAggregatorMock { get; }
     public LoansService LoansService { get; }
     public LoansServiceFixture()
     {
@@ -38,10 +40,11 @@ public class LoansServiceFixture : IDisposable
         ReservationQueueServiceMock = new Mock<IReservationsQueueService>();
         LoggerMock = new Mock<ILogger<LoansService>>();
         LateReturnOrLostFeeServiceMock = new Mock<ILateReturnOrLostFeeService>();
+        EventAggregatorMock = new Mock<IEventAggregator>();
         LoansService = new LoansService(
             DbContext, LoansMapperMock.Object,
-            LoggerMock.Object, EmailsTemplateServiceMock.Object,
-            ReservationQueueServiceMock.Object, LateReturnOrLostFeeServiceMock.Object);
+            LoggerMock.Object, 
+            ReservationQueueServiceMock.Object, LateReturnOrLostFeeServiceMock.Object, EventAggregatorMock.Object);
 
     }
     public void Dispose()

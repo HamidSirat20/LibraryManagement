@@ -55,4 +55,5 @@ public class Book : BaseEntityWithId, IComparable<Book>, IEquatable<Book>
         PublishedDate == other.PublishedDate &&
         Genre == other.Genre &&
         Pages == other.Pages;
+
 }

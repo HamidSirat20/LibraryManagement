@@ -38,5 +38,4 @@ public class User : BaseEntityWithId
         MembershipEndDate = membershipEndDate;
     }
     public override string ToString() => $"{FirstName} {LastName} ({Email}) - {Phone}";
-
 }

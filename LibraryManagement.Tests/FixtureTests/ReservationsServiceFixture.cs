@@ -1,4 +1,5 @@
 ﻿using LibraryManagement.WebAPI.Data;
+using LibraryManagement.WebAPI.Events;
 using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
@@ -20,6 +21,7 @@ public class ReservationsServiceFixture : IDisposable
     public Mock<IEmailsTemplateService> EmailsTemplateServiceMock { get; }
     public Mock<IReservationsQueueService> ReservationsQueueServiceMock { get; }
     public Mock<IConfiguration> ConfigurationMock { get; }
+    public Mock<IEventAggregator> EventAggregatorMock { get; }
 
     public ReservationsServiceFixture()
     {
@@ -40,6 +42,7 @@ public class ReservationsServiceFixture : IDisposable
         EmailServiceMock = new Mock<IEmailService>();
         EmailsTemplateServiceMock = new Mock<IEmailsTemplateService>();
         ReservationsQueueServiceMock = new Mock<IReservationsQueueService>();
+        EventAggregatorMock = new Mock<IEventAggregator>();
 
         ReservationsService = new ReservationService(
             DbContext,
@@ -47,7 +50,8 @@ public class ReservationsServiceFixture : IDisposable
             ReservationsMapperMock.Object,
             EmailServiceMock.Object,
             EmailsTemplateServiceMock.Object,
-            ReservationsQueueServiceMock.Object
+            ReservationsQueueServiceMock.Object,
+            EventAggregatorMock.Object
         );
     }
     public void Dispose()

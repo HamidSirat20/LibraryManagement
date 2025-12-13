@@ -58,4 +58,18 @@ public class Loan : BaseEntityWithId
         }
     }
 
+    public void Deconstruct(
+       out User user,
+       out Book book,
+       out DateTime dueDate,
+       out DateTime? returnDate,
+       out LoanStatus status)
+    {
+        user = User;
+        book = Book;
+        dueDate = DueDate;
+        returnDate = ReturnDate;
+        status = LoanStatus;
+    }
+
 }

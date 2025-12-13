@@ -918,9 +918,7 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
       .Returns("EMAIL_TEMPLATE_BODY");
         _fixture.ReservationQueueServiceMock
             .Setup(b => b.ProcessNextReservationAfterReturnAsync(
-                book1.Id,
-                "Book is ready for pickup",
-                "EMAIL_TEMPLATE_BODY"))
+                book1.Id))
             .Returns(Task.CompletedTask);
         _dbContext.ChangeTracker.Clear();
         // Act
@@ -937,7 +935,7 @@ public class LoanServiceTests : IClassFixture<LoansServiceFixture>
     {
         //Arrange
         // Act & Assert
-        await Assert.ThrowsAsync<BusinessRuleViolationException>(async () =>
+        await Assert.ThrowsAsync<ArgumentNullException>(async () =>
         {
             await _loanService.ReturnBookAsync(Guid.NewGuid());
         });

@@ -42,7 +42,7 @@ public class ReservationService : IReservationService
            .FirstOrDefaultAsync(u => u.Id == userId)
            ?? throw new KeyNotFoundException($"User with ID {userId} not found.");
 
-            if (!user.IsActive)
+            if (user is { IsActive: false })
             {
                 throw new BusinessRuleViolationException(
                     "Your membership has expired. Please renew before borrowing books.",
@@ -106,11 +106,6 @@ public class ReservationService : IReservationService
                       .Include(r => r.Book)
                       .FirstOrDefaultAsync(r => r.Id == reservation.Id);
 
-            // build email body
-            //var reservationCreatedAt = reservation.CreatedAt ?? DateTime.UtcNow;
-            //var body = _emailTemplateService.GetReservationConfirmationTemplate(newReservation.User.FullName, newReservation.User.LastName, newReservation.Book.Title
-            //    , reservationCreatedAt, newReservation.QueuePosition);
-            //await _emailService.SendEmailAsync(reservation.User.Email, "Reservation Created", body);
             //publish event
             await _eventAggregator.PublishAsync(new ReservationCreatedEventArgs
             {
