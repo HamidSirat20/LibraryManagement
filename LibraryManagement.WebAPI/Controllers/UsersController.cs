@@ -5,12 +5,12 @@ using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace LibraryManagement.WebAPI.Controllers;
 
 [ApiController]
-//[Authorize]
 [Route("api/v{version:ApiVersion}/[controller]")]
 [ApiVersion("1.0")]
 public class UsersController : ControllerBase
@@ -25,7 +25,7 @@ public class UsersController : ControllerBase
     }
     [HttpGet]
     [HttpHead]
-    //[Authorize(Policy = "AdminCanAccess")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> ListALLUsers([FromQuery] QueryOptions queryOptions)
     {
         var users = await _userService.ListAllUsersAsync(queryOptions);
@@ -50,6 +50,8 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}", Name = "GetOneUser")]
+    [Authorize(Policy = "AdminCanAccess")]
+
     public async Task<IActionResult> GetOneUser(Guid id)
     {
         var user = await _userService.GetByIdAsync(id);
@@ -62,7 +64,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    //[Authorize(Policy = "AdminCanAccess")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> DeleteOneUser(Guid id)
     {
         var exists = await _userService.EntityExistAsync(id);
@@ -99,7 +101,7 @@ public class UsersController : ControllerBase
                  userReadDto);
     }
     [HttpPost("admin")]
-    //[Authorize(Policy = "AdminCanAccess")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> CreateAdmin([FromForm] UserCreateDto userCreateDto)
     {
         if (userCreateDto == null)
@@ -119,7 +121,7 @@ public class UsersController : ControllerBase
         return CreatedAtRoute("GetOneUser", new { id = createdUser.Id }, userReadDto);
     }
     [HttpGet("by-email/{email}")]
-    // [Authorize(Policy = "AdminCanAccess")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<ActionResult<UserReadDto>> GetUserByEmail(string email)
     {
         var user = await _userService.GetByEmailAsync(email);
@@ -130,42 +132,51 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
     [HttpGet("with-active-loans")]
-    // [Authorize(Policy = "AdminCanAccess")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> GetUserWithActiveLoan()
     {
         var users = await _userService.GetUsersWithActiveLoansAsync();
-        return Ok(users);
+        var readDtos = users.Select(u => _userMapper.ToReadDto(u));
+        return Ok(readDtos);
     }
     [HttpGet("with-overdue-loans")]
+    [Authorize(Policy = "AdminCanAccess")]
     public async Task<IActionResult> GetUserWithOverdueLoan()
     {
         var users = await _userService.GetUsersWithOverdueLoansAsync();
-        return Ok(users);
+        var readDtos = users.Select(u => _userMapper.ToReadDto(u));
+
+        return Ok(readDtos);
     }
     [HttpPut("{id}")]
-    [Authorize(Policy = "AdminCanAccess")]
-    public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UserUpdateDto userUpdateDto)
+    [Authorize(AuthenticationSchemes = "Entra,Manual")]
+    public async Task<IActionResult> UpdateUser(Guid id, [FromForm] UserUpdateDto userUpdateDto)
     {
-        if (userUpdateDto == null)
-        {
-            return BadRequest("User data is null");
-        }
-        var updatedUser = await _userService.UpdateUserAsync(id, userUpdateDto);
-        if (updatedUser is null)
-        {
-            return NotFound();
-        }
         if (!ModelState.IsValid)
-        {
             return BadRequest(ModelState);
-        }
-        return Ok(updatedUser);
+
+        var tokenUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (tokenUserId == null)
+            return Forbid();
+
+        var isAdmin = User.IsInRole("Admin");
+
+        if (!isAdmin && tokenUserId != id.ToString())
+            return Forbid("You are not allowed to update this user.");
+
+        var updatedUser = await _userService.UpdateUserAsync(id, userUpdateDto);
+
+        if (updatedUser is null)
+            return NotFound();
+        var readDto = _userMapper.ToReadDto(updatedUser);
+        return Ok(readDto);
     }
     [HttpPost("extend-membership")]
     [Authorize(Policy = "AdminCanAccess")]
-    public async Task<IActionResult> ExtendUserMembership( [FromBody] Guid id)
+    public async Task<IActionResult> ExtendUserMembership([FromBody] Guid id)
     {
-      
+
         var extendedUser = await _userService.ExtendUserMembership(id);
 
         return Ok(extendedUser);

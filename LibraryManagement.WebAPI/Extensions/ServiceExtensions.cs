@@ -7,6 +7,7 @@ using LibraryManagement.WebAPI.Services.Implementations;
 using LibraryManagement.WebAPI.Services.Interfaces;
 using LibraryManagement.WebAPI.Services.ORM;
 using LibraryManagement.WebAPI.Services.ORM.Interfaces;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,6 +15,7 @@ using Newtonsoft.Json.Converters;
 using Serilog;
 using System.Net;
 using System.Net.Mail;
+using System.Security.Claims;
 using System.Text;
 
 namespace LibraryManagement.WebAPI.Extensions;
@@ -109,7 +111,7 @@ public static class ServiceExtensions
         webApplication.Services.AddTransient<IEmailService, EmailService>();
         webApplication.Services.AddTransient<ILateReturnOrLostFeeService, LateReturnOrLostFeeService>();
         webApplication.Services.AddTransient<ILateReturnOrLostFeeMapper, LateReturnOrLostFeeMapper>();
-        
+
         webApplication.Services.AddScoped<IEventAggregator, EventAggregator>(); 
         webApplication.Services.AddScoped<IEventHandler<ReservationReadyEventArgs>, NotificationService>();
         webApplication.Services.AddScoped<IEventHandler<LateReturnFineOrLostEventArgs>, NotificationService>();
@@ -163,8 +165,27 @@ public static class ServiceExtensions
         webApplication.Services.AddSwaggerGen();
 
         // Add Authentication
-        webApplication.Services.AddAuthentication("Bearer")
-         .AddJwtBearer(options =>
+        webApplication.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = "Manual";
+            options.DefaultChallengeScheme = "Manual";
+            options.DefaultScheme = "Manual";
+        })
+           .AddJwtBearer("Entra", options =>
+           {
+
+               options.Authority = webApplication.Configuration["Entra:issuer"];
+               options.Audience = webApplication.Configuration["Entra:audience"];
+               options.TokenValidationParameters = new TokenValidationParameters
+               {
+                   ValidateIssuer = true,
+                   ValidateAudience = true,
+                   ValidateLifetime = true,
+                   ValidIssuer = webApplication.Configuration["Entra:issuer"],
+                   ValidAudience = webApplication.Configuration["Entra:audience"],
+               };    
+                })
+         .AddJwtBearer("Manual", options =>
          {
              options.TokenValidationParameters = new TokenValidationParameters
              {
@@ -177,19 +198,20 @@ public static class ServiceExtensions
                  IssuerSigningKey = new SymmetricSecurityKey(
                      Encoding.UTF8.GetBytes(webApplication.Configuration["Authentication:secretKey"])
                  ),
-                 RoleClaimType = "role"
              };
          });
+        // Register the claims normalizer 
+        webApplication.Services.AddScoped<IClaimsTransformation, ClaimsNormalizer>();
 
         webApplication.Services.AddAuthorization(options =>
         {
             options.AddPolicy("AdminCanAccess", policy =>
             {
                 policy.RequireAuthenticatedUser();
-                policy.RequireRole("Admin");
+                policy.RequireRole("Admin"); 
+                policy.AuthenticationSchemes = new List<string> { "Manual", "Entra" };
             });
         });
-
 
         //add versioning
         webApplication.Services.AddApiVersioning(options =>
